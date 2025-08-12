@@ -104,8 +104,8 @@ export async function handler(event) {
     });
 
     const text = await response.text();
-    console.log("Turso response status:", response.status);
-    console.log("Turso response body:", text);
+    // console.log("Turso response status:", response.status);
+    // console.log("Turso response body:", text);
 
     if (!response.ok) {
       return {

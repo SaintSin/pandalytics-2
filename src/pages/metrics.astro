@@ -1,0 +1,145 @@
+ ---
+const TURSO_REST_ENDPOINT = import.meta.env.TURSO_REST_ENDPOINT;
+const TURSO_API_TOKEN = import.meta.env.TURSO_API_TOKEN;
+
+// SQL query to fetch latest 50 metrics
+const sql = `
+  SELECT 
+    session_id,
+    site_id,
+    url,
+    country_code,
+    screen_width,
+    screen_height,
+    duration_ms,
+    pageviews_in_session,
+    ts,
+    fcp
+  FROM metrics
+  ORDER BY ts DESC
+  LIMIT 50
+`;
+
+let results = [];
+let errorMsg = null;
+
+try {
+  const res = await fetch(TURSO_REST_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${TURSO_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      statements: [
+        { q: sql }
+      ]
+    }),
+  });
+
+  if (!res.ok) {
+    errorMsg = `Error fetching metrics: ${res.status} ${res.statusText}`;
+  } else {
+    const data = await res.json();
+    // console.log('Turso raw data:', JSON.stringify(data, null, 2));
+
+    if (data?.[0]?.results?.rows) {
+      results = data[0].results.rows;
+    } else {
+      errorMsg = 'No rows found in Turso response.';
+    }
+  }
+} catch (err) {
+  errorMsg = `Fetch error: ${err.message}`;
+}
+---
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Metrics</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2rem;
+        background: #f9f9f9;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        background: white;
+      }
+      th, td {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+      }
+      th {
+        background: #f0f0f0;
+        text-align: left;
+      }
+      tr:hover {
+        background: #f7f7f7;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+      pre {
+        background: #222;
+        color: #eee;
+        padding: 1rem;
+        overflow-x: auto;
+        max-height: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Latest Metrics</h1>
+
+    {errorMsg ? (
+      <p class="error">{errorMsg}</p>
+    ) : results.length > 0 ? (
+      <table>
+        <thead>
+          <tr>
+            <th>Session ID</th>
+            <th>Site ID</th>
+            <th>URL</th>
+            <th>Country</th>
+            <th>Screen</th>
+            <th>Duration (ms)</th>
+            <th>Pageviews</th>      
+             <th>FCP</th>
+
+            <th>Timestamp</th>     
+          </tr>
+        </thead>
+        <tbody>
+          {results.map(row => (
+            <tr>
+              <td>{row[0]}</td>
+              <td>{row[1]}</td>
+              <td>{row[2]}</td>
+              <td>{row[3] ?? ''}</td>
+              <td>{row[4]}×{row[5]}</td>
+              <td>{row[6]}</td>
+              <td>{row[7]}</td>              <td>{row[9]}</td>
+
+              <td>{new Date(row[8]).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p>No metrics found.</p>
+    )}
+
+    <h2>Raw Turso Response (Debugging)</h2>
+    <pre>{JSON.stringify(results, null, 2)}</pre>
+  </body>
+</html>
