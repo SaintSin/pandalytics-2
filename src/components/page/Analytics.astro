@@ -1,0 +1,106 @@
+---
+/* Client script for Core Web Vitals + session tracking */
+---
+
+<script>
+
+(function(){
+  function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  const siteId = 'mysite'; // Change per site
+
+  let sessionId = localStorage.getItem('session_id');
+  if (!sessionId) {
+    sessionId = generateUUID();
+    localStorage.setItem('session_id', sessionId);
+    localStorage.setItem('session_start', Date.now());
+    localStorage.setItem('pageviews_in_session', 0);
+  }
+  let pageviews = parseInt(localStorage.getItem('pageviews_in_session') || '0', 10) + 1;
+  localStorage.setItem('pageviews_in_session', pageviews);
+
+  // Metrics store
+  let metrics = {
+    session_id: sessionId,
+    site_id: siteId,
+    url: location.href,
+    path: location.pathname,
+    referrer: document.referrer || null,
+    screen_width: window.screen.width,
+    screen_height: window.screen.height,
+    user_agent: navigator.userAgent,
+    lcp: null,
+    cls: 0,
+    fid: null,
+    fcp: null,
+    ttfb: null,
+    inp: null,
+    duration_ms: 0,
+    bounce: pageviews === 1 ? 1 : 0,
+    pageviews_in_session: pageviews
+  };
+
+  const poLCP = new PerformanceObserver(list => {
+    const lastEntry = list.getEntries().pop();
+    metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
+  });
+  poLCP.observe({ type: 'largest-contentful-paint', buffered: true });
+
+  const poFID = new PerformanceObserver(list => {
+    const firstInput = list.getEntries()[0];
+    if (firstInput) {
+      metrics.fid = firstInput.processingStart - firstInput.startTime;
+    }
+  });
+  poFID.observe({ type: 'first-input', buffered: true });
+
+  const poCLS = new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) {
+      if (!entry.hadRecentInput) {
+        metrics.cls += entry.value;
+      }
+    }
+  });
+  poCLS.observe({ type: 'layout-shift', buffered: true });
+
+  const poPaint = new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) {
+      if (entry.name === 'first-contentful-paint') {
+        metrics.fcp = entry.startTime;
+      }
+    }
+  });
+  poPaint.observe({ type: 'paint', buffered: true });
+
+  const navEntry = performance.getEntriesByType('navigation')[0];
+  if (navEntry) {
+    metrics.ttfb = navEntry.responseStart;
+  }
+
+  // Duration tracking
+  const start = Date.now();
+  window.addEventListener('beforeunload', () => {
+    metrics.duration_ms = Date.now() - start;
+    sendMetrics();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      metrics.duration_ms = Date.now() - start;
+      sendMetrics();
+    }
+  });
+
+  function sendMetrics() {
+    navigator.sendBeacon(
+      '/.netlify/functions/recordMetric',
+      JSON.stringify(metrics)
+    );
+  }
+})();
+</script>
