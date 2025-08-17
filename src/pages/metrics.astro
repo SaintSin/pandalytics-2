@@ -1,4 +1,4 @@
- ---
+---
 const TURSO_REST_ENDPOINT = import.meta.env.TURSO_REST_ENDPOINT;
 const TURSO_API_TOKEN = import.meta.env.TURSO_API_TOKEN;
 
@@ -25,15 +25,13 @@ let errorMsg = null;
 
 try {
   const res = await fetch(TURSO_REST_ENDPOINT, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${TURSO_API_TOKEN}`,
-      'Content-Type': 'application/json',
+      Authorization: `Bearer ${TURSO_API_TOKEN}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      statements: [
-        { q: sql }
-      ]
+      statements: [{ q: sql }],
     }),
   });
 
@@ -46,7 +44,7 @@ try {
     if (data?.[0]?.results?.rows) {
       results = data[0].results.rows;
     } else {
-      errorMsg = 'No rows found in Turso response.';
+      errorMsg = "No rows found in Turso response.";
     }
   }
 } catch (err) {
@@ -60,18 +58,19 @@ try {
     <title>Metrics</title>
     <style>
       body {
-        font-family: sans-serif;
         margin: 2rem;
         background: #f9f9f9;
+        font-family: sans-serif;
       }
       table {
         border-collapse: collapse;
-        width: 100%;
         background: white;
+        width: 100%;
       }
-      th, td {
-        padding: 8px 12px;
+      th,
+      td {
         border: 1px solid #ddd;
+        padding: 8px 12px;
         font-size: 14px;
       }
       th {
@@ -82,8 +81,8 @@ try {
         background: #f7f7f7;
       }
       h1 {
-        font-size: 1.5rem;
         margin-bottom: 1rem;
+        font-size: 1.5rem;
       }
       .error {
         color: red;
@@ -91,53 +90,56 @@ try {
       }
       pre {
         background: #222;
-        color: #eee;
         padding: 1rem;
-        overflow-x: auto;
         max-height: 300px;
+        overflow-x: auto;
+        color: #eee;
       }
     </style>
   </head>
   <body>
     <h1>Latest Metrics</h1>
 
-    {errorMsg ? (
-      <p class="error">{errorMsg}</p>
-    ) : results.length > 0 ? (
-      <table>
-        <thead>
-          <tr>
-            <th>Session ID</th>
-            <th>Site ID</th>
-            <th>URL</th>
-            <th>Country</th>
-            <th>Screen</th>
-            <th>Duration (ms)</th>
-            <th>Pageviews</th>      
-             <th>FCP</th>
-
-            <th>Timestamp</th>     
-          </tr>
-        </thead>
-        <tbody>
-          {results.map(row => (
+    {
+      errorMsg ? (
+        <p class="error">{errorMsg}</p>
+      ) : results.length > 0 ? (
+        <table>
+          <thead>
             <tr>
-              <td>{row[0]}</td>
-              <td>{row[1]}</td>
-              <td>{row[2]}</td>
-              <td>{row[3] ?? ''}</td>
-              <td>{row[4]}×{row[5]}</td>
-              <td>{row[6]}</td>
-              <td>{row[7]}</td>              <td>{row[9]}</td>
+              <th>Session ID</th>
+              <th>Site ID</th>
+              <th>URL</th>
+              <th>Country</th>
+              <th>Screen</th>
+              <th>Duration (ms)</th>
+              <th>Pageviews</th>
+              <th>FCP</th>
 
-              <td>{new Date(row[8]).toLocaleString()}</td>
+              <th>Timestamp</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    ) : (
-      <p>No metrics found.</p>
-    )}
+          </thead>
+          <tbody>
+            {results.map((row) => (
+              <tr>
+                <td>{row[0]}</td>
+                <td>{row[1]}</td>
+                <td>{row[2]}</td>
+                <td>{row[3] ?? ""}</td>
+                <td>
+                  {row[4]}×{row[5]}
+                </td>
+                <td>{row[6]}</td>
+                <td>{row[7]}</td> <td>{row[9]}</td>
+                <td>{new Date(row[8]).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>No metrics found.</p>
+      )
+    }
 
     <h2>Raw Turso Response (Debugging)</h2>
     <pre>{JSON.stringify(results, null, 2)}</pre>
