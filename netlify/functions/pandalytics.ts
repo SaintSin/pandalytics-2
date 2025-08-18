@@ -23,13 +23,6 @@ interface MetricData {
   pageviews_in_session?: number;
 }
 
-interface TursoResponse {
-  results?: Array<{
-    success: boolean;
-    meta?: any;
-  }>;
-}
-
 export const handler: Handler = async (event: HandlerEvent) => {
   const method = event.httpMethod;
 

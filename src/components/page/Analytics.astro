@@ -1,4 +1,6 @@
 ---
+// src/componnents/Analytics.astro
+
 /* Client script for Core Web Vitals + session tracking */
 ---
 
@@ -12,18 +14,18 @@
       });
     }
 
-    const siteId = "Pandalytics 2"; // Change per site
+    const siteId = "Astro Lightbox"; // Change per site
 
     let sessionId = localStorage.getItem("session_id");
     if (!sessionId) {
       sessionId = generateUUID();
       localStorage.setItem("session_id", sessionId);
-      localStorage.setItem("session_start", Date.now());
-      localStorage.setItem("pageviews_in_session", 0);
+      localStorage.setItem("session_start", Date.now().toString());
+      localStorage.setItem("pageviews_in_session", "0");
     }
     let pageviews =
       parseInt(localStorage.getItem("pageviews_in_session") || "0", 10) + 1;
-    localStorage.setItem("pageviews_in_session", pageviews);
+    localStorage.setItem("pageviews_in_session", pageviews.toString());
 
     // Metrics store
     let metrics = {
@@ -35,26 +37,32 @@
       screen_width: window.screen.width,
       screen_height: window.screen.height,
       user_agent: navigator.userAgent,
-      lcp: null,
+      lcp: null as number | null,
       cls: 0,
-      fid: null,
-      fcp: null,
-      ttfb: null,
-      inp: null,
+      fid: null as number | null,
+      fcp: null as number | null,
+      ttfb: null as number | null,
+      inp: null as number | null,
       duration_ms: 0,
       bounce: pageviews === 1 ? 1 : 0,
       pageviews_in_session: pageviews,
     };
 
     const poLCP = new PerformanceObserver((list) => {
-      const lastEntry = list.getEntries().pop();
-      metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
+      const lastEntry = list.getEntries().pop() as
+        | PerformanceNavigationTiming
+        | PerformancePaintTiming
+        | any;
+      if (lastEntry) {
+        metrics.lcp =
+          lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+      }
     });
     poLCP.observe({ type: "largest-contentful-paint", buffered: true });
 
     const poFID = new PerformanceObserver((list) => {
-      const firstInput = list.getEntries()[0];
-      if (firstInput) {
+      const firstInput = list.getEntries()[0] as any;
+      if (firstInput && firstInput.processingStart) {
         metrics.fid = firstInput.processingStart - firstInput.startTime;
       }
     });
@@ -62,8 +70,9 @@
 
     const poCLS = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (!entry.hadRecentInput) {
-          metrics.cls += entry.value;
+        const clsEntry = entry as any;
+        if (!clsEntry.hadRecentInput && clsEntry.value !== undefined) {
+          metrics.cls += clsEntry.value;
         }
       }
     });
@@ -78,8 +87,10 @@
     });
     poPaint.observe({ type: "paint", buffered: true });
 
-    const navEntry = performance.getEntriesByType("navigation")[0];
-    if (navEntry) {
+    const navEntry = performance.getEntriesByType(
+      "navigation",
+    )[0] as PerformanceNavigationTiming;
+    if (navEntry && navEntry.responseStart) {
       metrics.ttfb = navEntry.responseStart;
     }
 
