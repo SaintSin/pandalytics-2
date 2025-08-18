@@ -1,6 +1,36 @@
-// netlify/functions/recordMetrics.js
+// netlify/functions/pandalytics.ts
 
-export async function handler(event) {
+import type { Handler, HandlerEvent } from "@netlify/functions";
+
+interface MetricData {
+  session_id: string;
+  site_id: string;
+  url: string;
+  path?: string;
+  referrer?: string;
+  country_code?: string;
+  screen_width?: number;
+  screen_height?: number;
+  user_agent?: string;
+  lcp?: number;
+  cls?: number;
+  fid?: number;
+  fcp?: number;
+  ttfb?: number;
+  inp?: number;
+  duration_ms?: number;
+  bounce?: boolean;
+  pageviews_in_session?: number;
+}
+
+interface TursoResponse {
+  results?: Array<{
+    success: boolean;
+    meta?: any;
+  }>;
+}
+
+export const handler: Handler = async (event: HandlerEvent) => {
   const method = event.httpMethod;
 
   if (method !== "POST") {
@@ -11,9 +41,9 @@ export async function handler(event) {
     };
   }
 
-  let bodyData;
+  let bodyData: MetricData;
   try {
-    bodyData = JSON.parse(event.body);
+    bodyData = JSON.parse(event.body || "{}") as MetricData;
   } catch {
     return {
       statusCode: 400,
@@ -67,32 +97,32 @@ export async function handler(event) {
     )
   `;
 
-  const params = [
+  const params: (string | number | boolean | null)[] = [
     session_id,
     site_id,
     url,
-    path,
-    referrer,
-    country_code,
-    screen_width,
-    screen_height,
-    user_agent,
-    lcp,
-    cls,
-    fid,
-    fcp,
-    ttfb,
-    inp,
-    duration_ms,
-    bounce,
-    pageviews_in_session,
+    path || null,
+    referrer || null,
+    country_code || null,
+    screen_width || null,
+    screen_height || null,
+    user_agent || null,
+    lcp || null,
+    cls || null,
+    fid || null,
+    fcp || null,
+    ttfb || null,
+    inp || null,
+    duration_ms || null,
+    bounce || null,
+    pageviews_in_session || null,
     Date.now(),
   ];
 
   try {
     console.log("Sending to Turso with correct JSON shape...");
 
-    const response = await fetch(process.env.TURSO_REST_ENDPOINT, {
+    const response = await fetch(process.env.TURSO_REST_ENDPOINT!, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.TURSO_API_TOKEN}`,
@@ -131,8 +161,8 @@ export async function handler(event) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         error: "Internal server error",
-        detail: error.message,
+        detail: error instanceof Error ? error.message : "Unknown error",
       }),
     };
   }
-}
+};

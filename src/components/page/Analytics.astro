@@ -12,7 +12,7 @@
       });
     }
 
-    const siteId = "Pandalytics"; // Change per site
+    const siteId = "Pandalytics 2"; // Change per site
 
     let sessionId = localStorage.getItem("session_id");
     if (!sessionId) {
@@ -98,7 +98,7 @@
 
     function sendMetrics() {
       navigator.sendBeacon(
-        "/.netlify/functions/recordMetric",
+        "/.netlify/functions/pandalytics",
         JSON.stringify(metrics),
       );
     }
