@@ -2,23 +2,47 @@
 const TURSO_REST_ENDPOINT = import.meta.env.TURSO_REST_ENDPOINT;
 const TURSO_API_TOKEN = import.meta.env.TURSO_API_TOKEN;
 
-// SQL query to fetch latest 50 metrics
+// SQL query to fetch latest 50 pageviews with session data
 const sql = `
   SELECT 
-    session_id,
-    site_id,
-    url,
-    country_code,
-    screen_width,
-    screen_height,
-    duration_ms,
-    pageviews_in_session,
-    ts,
-    fcp
-  FROM metrics
-  ORDER BY ts DESC
+    p.session_id,
+    s.site_id,
+    p.url,
+    p.path,
+    s.country_code,
+    s.screen_width,
+    s.screen_height,
+    p.duration_ms,
+    s.total_pageviews,
+    p.timestamp,
+    p.lcp,
+    p.cls,
+    p.fid,
+    p.fcp,
+    p.ttfb,
+    p.inp,
+    s.browser
+  FROM pageviews p
+  JOIN sessions s ON p.session_id = s.session_id
+  ORDER BY p.timestamp DESC
   LIMIT 50
 `;
+
+// Browser is now stored directly in sessions table, no parsing needed
+
+// Function to format Core Web Vitals
+function formatCWV(metric, value) {
+  if (value === null || value === undefined) return "-";
+
+  const val = Math.round(value);
+
+  switch (metric) {
+    case "cls":
+      return (val / 1000).toFixed(3);
+    default:
+      return `${val}ms`;
+  }
+}
 
 let results = [];
 let errorMsg = null;
@@ -109,13 +133,18 @@ try {
             <tr>
               <th>Session ID</th>
               <th>Site ID</th>
-              <th>URL</th>
+              <th>Path</th>
               <th>Country</th>
               <th>Screen</th>
               <th>Duration (ms)</th>
               <th>Pageviews</th>
+              <th>LCP</th>
+              <th>CLS</th>
+              <th>FID</th>
               <th>FCP</th>
-
+              <th>TTFB</th>
+              <th>INP</th>
+              <th>Browser</th>
               <th>Timestamp</th>
             </tr>
           </thead>
@@ -124,14 +153,21 @@ try {
               <tr>
                 <td>{row[0]}</td>
                 <td>{row[1]}</td>
-                <td>{row[2]}</td>
-                <td>{row[3] ?? ""}</td>
+                <td>{row[3] || row[2]}</td>
+                <td>{row[4] ?? ""}</td>
                 <td>
-                  {row[4]}×{row[5]}
+                  {row[5]}×{row[6]}
                 </td>
-                <td>{row[6]}</td>
-                <td>{row[7]}</td> <td>{row[9]}</td>
-                <td>{new Date(row[8]).toLocaleString()}</td>
+                <td>{row[7]}</td>
+                <td>{row[8]}</td>
+                <td>{formatCWV("lcp", row[10])}</td>
+                <td>{formatCWV("cls", row[11])}</td>
+                <td>{formatCWV("fid", row[12])}</td>
+                <td>{formatCWV("fcp", row[13])}</td>
+                <td>{formatCWV("ttfb", row[14])}</td>
+                <td>{formatCWV("inp", row[15])}</td>
+                <td>{row[16] || "Unknown"}</td>
+                <td>{new Date(row[9]).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
