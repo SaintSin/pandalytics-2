@@ -50,6 +50,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       }
 
       // Basic metrics
+      const startTime = Date.now();
       const metrics = {
         session_id: sessionId,
         site_id: siteId,
@@ -59,14 +60,15 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         screen_width: window.screen.width,
         screen_height: window.screen.height,
         user_agent: navigator.userAgent,
-        timestamp: Date.now(),
+        timestamp: startTime,
         is_first_visit: isFirstVisit,
         // CWV placeholders
         lcp: null,
         fid: null,
         cls: 0,
         fcp: null,
-        ttfb: null
+        ttfb: null,
+        duration_ms: 0
       };
 
       // Core Web Vitals tracking
@@ -114,6 +116,8 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
       // Send metrics after a delay to capture CWV
       setTimeout(() => {
+        metrics.duration_ms = Date.now() - startTime;
+        
         const blob = new Blob([JSON.stringify(metrics)], {
           type: "application/json",
         });
