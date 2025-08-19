@@ -1,12 +1,4 @@
 ---
-import Layout from "@layouts/BaseLayout.astro";
-
-const meta = {
-  title: "Welcome to Astro",
-  description: "The metadescription",
-  imageOG: "generic-social-1200x630.png",
-  altOG: "Alt text for OG image",
-};
 const TURSO_REST_ENDPOINT = import.meta.env.TURSO_REST_ENDPOINT;
 const TURSO_API_TOKEN = import.meta.env.TURSO_API_TOKEN;
 
@@ -119,8 +111,52 @@ try {
 }
 ---
 
-<Layout metaData={meta}>
-  <main class="wrapper">
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Metrics</title>
+    <style>
+      body {
+        margin: 2rem;
+        background: #f9f9f9;
+        font-family: sans-serif;
+      }
+      table {
+        border-collapse: collapse;
+        background: white;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      th {
+        background: #f0f0f0;
+        text-align: left;
+      }
+      tr:hover {
+        background: #f7f7f7;
+      }
+      h1 {
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+      pre {
+        background: #222;
+        padding: 1rem;
+        max-height: 300px;
+        overflow-x: auto;
+        color: #eee;
+      }
+    </style>
+  </head>
+  <body>
     <h1>Latest Metrics</h1>
 
     {
@@ -178,40 +214,5 @@ try {
 
     <h2>Raw Turso Response (Debugging)</h2>
     <pre>{JSON.stringify(results, null, 2)}</pre>
-  </main>
-</Layout>
-<style>
-  table {
-    border-collapse: collapse;
-    background: white;
-    width: 100%;
-  }
-  th,
-  td {
-    border: 1px solid #ddd;
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-  th {
-    background: #f0f0f0;
-    text-align: left;
-  }
-  tr:hover {
-    background: #f7f7f7;
-  }
-  h1 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-  }
-  .error {
-    color: red;
-    font-weight: bold;
-  }
-  pre {
-    background: #222;
-    padding: 1rem;
-    max-height: 300px;
-    overflow-x: auto;
-    color: #eee;
-  }
-</style>
+  </body>
+</html>
