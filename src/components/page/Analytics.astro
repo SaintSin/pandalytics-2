@@ -1,5 +1,5 @@
 ---
-// src/componnents/Analytics.astro
+// src/components/Analytics.astro
 
 /* Client script for Core Web Vitals + session tracking */
 ---
@@ -16,20 +16,20 @@
 
     const siteId = "Pandalytics 2a1"; // Change per site
 
-    let sessionId = localStorage.getItem("session_id");
+    let sessionId = sessionStorage.getItem("session_id");
     if (!sessionId) {
       sessionId = generateUUID();
-      localStorage.setItem("session_id", sessionId);
-      localStorage.setItem("session_start", Date.now().toString());
-      localStorage.setItem("pageviews_in_session", "0");
+      sessionStorage.setItem("session_id", sessionId);
+      sessionStorage.setItem("session_start", Date.now().toString());
+      sessionStorage.setItem("pageviews_in_session", "0");
     }
 
     // Only increment pageviews if this is a new page load, not a script re-run
     const currentPageKey = `visited_${sessionId}_${location.pathname}`;
-    const hasVisitedThisPage = localStorage.getItem(currentPageKey);
+    const hasVisitedThisPage = sessionStorage.getItem(currentPageKey);
 
     let pageviews = parseInt(
-      localStorage.getItem("pageviews_in_session") || "0",
+      sessionStorage.getItem("pageviews_in_session") || "0",
       10,
     );
     let isNewPageVisit = false;
@@ -37,8 +37,8 @@
     if (!hasVisitedThisPage) {
       pageviews += 1;
       isNewPageVisit = true;
-      localStorage.setItem("pageviews_in_session", pageviews.toString());
-      localStorage.setItem(currentPageKey, "true");
+      sessionStorage.setItem("pageviews_in_session", pageviews.toString());
+      sessionStorage.setItem(currentPageKey, "true");
     }
 
     // Metrics store
@@ -116,17 +116,17 @@
       metrics.ttfb = navEntry.responseStart;
     }
 
-    // Duration tracking
-    const start = Date.now();
-    const pageLoadKey = `metrics_sent_${sessionId}_${location.pathname}_${start}`;
-    let metricsSent = localStorage.getItem(pageLoadKey) === "true";
+    // Duration tracking from navigation start (consistent with performance metrics)
+    const navigationStart = performance.timeOrigin;
+    const pageLoadKey = `metrics_sent_${sessionId}_${location.pathname}_${Date.now()}`;
+    let metricsSent = sessionStorage.getItem(pageLoadKey) === "true";
 
     console.log("🔧 Analytics script initialized for session:", sessionId);
 
     window.addEventListener("beforeunload", () => {
       console.log("🚪 beforeunload event, metricsSent:", metricsSent);
       if (!metricsSent) {
-        metrics.duration_ms = Date.now() - start;
+        metrics.duration_ms = Date.now() - navigationStart;
         sendMetrics();
       }
     });
@@ -138,7 +138,7 @@
         metricsSent,
       );
       if (document.visibilityState === "hidden" && !metricsSent) {
-        metrics.duration_ms = Date.now() - start;
+        metrics.duration_ms = Date.now() - navigationStart;
         sendMetrics();
       }
     });
@@ -149,7 +149,7 @@
         return;
       }
       metricsSent = true;
-      localStorage.setItem(pageLoadKey, "true");
+      sessionStorage.setItem(pageLoadKey, "true");
       console.log("📤 Sending metrics:", metrics);
 
       const blob = new Blob([JSON.stringify(metrics)], {
@@ -169,11 +169,11 @@
     }
 
     // Clean up old metrics_sent keys (keep only last 10 entries)
-    const allKeys = Object.keys(localStorage);
+    const allKeys = Object.keys(sessionStorage);
     const metricKeys = allKeys.filter((key) => key.startsWith("metrics_sent_"));
     if (metricKeys.length > 10) {
       metricKeys.sort();
-      metricKeys.slice(0, -10).forEach((key) => localStorage.removeItem(key));
+      metricKeys.slice(0, -10).forEach((key) => sessionStorage.removeItem(key));
     }
   })();
 </script>

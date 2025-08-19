@@ -1,4 +1,5 @@
 // netlify/functions/pandalytics.ts
+// Last updated: 2024-08-18 11:35
 
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
@@ -70,12 +71,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
     ttfb,
     inp,
     duration_ms,
-    bounce,
-    pageviews_in_session,
   } = bodyData;
 
   // Extract country from Netlify headers if not provided in data
-  const finalCountryCode = country_code || event.headers["x-country"] || null;
+  const finalCountryCode = country_code || (event.headers["x-country"] ?? null);
 
   if (!session_id || !site_id || !url) {
     console.log("❌ Missing required fields:", {
@@ -95,7 +94,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   // console.log("✅ All required fields present");
 
   // Parse browser from user agent
-  const parseBrowser = (userAgent: string | null): string => {
+  const parseBrowser = (userAgent: string | null | undefined): string => {
     if (!userAgent) return "Unknown";
     const ua = userAgent.toLowerCase();
 
@@ -168,6 +167,19 @@ export const handler: Handler = async (event: HandlerEvent) => {
     inp || null,
   ];
 
+  // Check required environment variables
+  if (!process.env.TURSO_REST_ENDPOINT || !process.env.TURSO_API_TOKEN) {
+    console.log("❌ Missing required environment variables");
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        error: "Server configuration error",
+        detail: "Missing database configuration",
+      }),
+    };
+  }
+
   try {
     // console.log("📤 Sending to Turso (new schema)...");
     // console.log("Session params:", JSON.stringify(sessionParams, null, 2));
@@ -180,7 +192,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       ],
     };
 
-    const response = await fetch(process.env.TURSO_REST_ENDPOINT!, {
+    const response = await fetch(process.env.TURSO_REST_ENDPOINT, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.TURSO_API_TOKEN}`,
