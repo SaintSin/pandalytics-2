@@ -26,6 +26,14 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
     }
 
     function initializeAnalytics() {
+      // Prevent duplicate sends within 2 seconds
+      const now = Date.now();
+      const lastSent = sessionStorage.getItem("last_analytics_send");
+      if (lastSent && (now - parseInt(lastSent)) < 2000) {
+        return;
+      }
+      sessionStorage.setItem("last_analytics_send", now.toString());
+
       // Get or create session
       let sessionId = sessionStorage.getItem("session_id");
       if (!sessionId) {
