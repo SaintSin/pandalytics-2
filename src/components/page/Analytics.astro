@@ -53,25 +53,74 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         user_agent: navigator.userAgent,
         timestamp: Date.now(),
         is_first_visit: isFirstVisit,
+        // CWV placeholders
+        lcp: null,
+        fid: null,
+        cls: 0,
+        fcp: null,
+        ttfb: null
       };
+
+      // Core Web Vitals tracking
+      // LCP - Largest Contentful Paint
+      new PerformanceObserver((list) => {
+        const lastEntry = list.getEntries().pop();
+        if (lastEntry) {
+          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+        }
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+
+      // FID - First Input Delay
+      new PerformanceObserver((list) => {
+        const firstInput = list.getEntries()[0];
+        if (firstInput && firstInput.processingStart) {
+          metrics.fid = firstInput.processingStart - firstInput.startTime;
+        }
+      }).observe({ type: "first-input", buffered: true });
+
+      // CLS - Cumulative Layout Shift
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (!entry.hadRecentInput && entry.value !== undefined) {
+            metrics.cls += entry.value;
+          }
+        }
+      }).observe({ type: "layout-shift", buffered: true });
+
+      // FCP - First Contentful Paint
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.name === "first-contentful-paint") {
+            metrics.fcp = entry.startTime;
+          }
+        }
+      }).observe({ type: "paint", buffered: true });
+
+      // TTFB - Time to First Byte
+      const navEntry = performance.getEntriesByType("navigation")[0];
+      if (navEntry && navEntry.responseStart) {
+        metrics.ttfb = navEntry.responseStart;
+      }
 
       console.log("📊 Analytics:", metrics);
 
-      // Send metrics
-      const blob = new Blob([JSON.stringify(metrics)], {
-        type: "application/json",
-      });
+      // Send metrics after a delay to capture CWV
+      setTimeout(() => {
+        const blob = new Blob([JSON.stringify(metrics)], {
+          type: "application/json",
+        });
 
-      if (navigator.sendBeacon) {
-        navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
-      } else {
-        fetch("/.netlify/functions/pandalytics", {
-          method: "POST",
-          body: JSON.stringify(metrics),
-          headers: { "Content-Type": "application/json" },
-          keepalive: true,
-        }).catch(() => {});
-      }
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
+        } else {
+          fetch("/.netlify/functions/pandalytics", {
+            method: "POST",
+            body: JSON.stringify(metrics),
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+          }).catch(() => {});
+        }
+      }, 1000);
     }
 
     // Initialize on page load
