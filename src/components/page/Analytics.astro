@@ -15,7 +15,7 @@
       });
     }
 
-    const siteId = "Pandalytics 2a2"; // Change per site
+    const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
     function initializeAnalytics() {
       let sessionId = sessionStorage.getItem("session_id");

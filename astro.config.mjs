@@ -13,6 +13,6 @@ export default defineConfig({
   },
 
   integrations: [sitemap(), icon()],
-  site: "http://localhost/",
+  site: "https://pandalytics-two.netlify.app",
   adapter: netlify(),
 });
