@@ -7,8 +7,9 @@ const meta = {
   imageOG: "generic-social-1200x630.png",
   altOG: "Alt text for OG image",
 };
-const TURSO_REST_ENDPOINT = import.meta.env.TURSO_REST_ENDPOINT;
-const TURSO_API_TOKEN = import.meta.env.TURSO_API_TOKEN;
+const PANDALYTICS_TURSO_REST_ENDPOINT = import.meta.env
+  .PANDALYTICS_TURSO_REST_ENDPOINT;
+const PANDALYTICS_TURSO_API_TOKEN = import.meta.env.PANDALYTICS_TURSO_API_TOKEN;
 
 // SQL query to fetch latest 50 pageviews with session data
 const sql = `
@@ -91,10 +92,10 @@ let results = [];
 let errorMsg = null;
 
 try {
-  const res = await fetch(TURSO_REST_ENDPOINT, {
+  const res = await fetch(PANDALYTICS_TURSO_REST_ENDPOINT, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${TURSO_API_TOKEN}`,
+      Authorization: `Bearer ${PANDALYTICS_TURSO_API_TOKEN}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

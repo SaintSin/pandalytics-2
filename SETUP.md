@@ -102,15 +102,15 @@ turso db shell pandalytics < db/create_tables.sql
 Add these to your Netlify site settings:
 
 ```env
-TURSO_REST_ENDPOINT=https://your-database.turso.io
-TURSO_API_TOKEN=your_auth_token_here
+PANDALYTICS_TURSO_REST_ENDPOINT=https://your-database.turso.io
+PANDALYTICS_TURSO_API_TOKEN=your_auth_token_here
 ```
 
 ### Local Development (.env)
 
 ```env
-TURSO_REST_ENDPOINT=https://your-database.turso.io
-TURSO_API_TOKEN=your_auth_token_here
+PANDALYTICS_TURSO_REST_ENDPOINT=https://your-database.turso.io
+PANDALYTICS_TURSO_API_TOKEN=your_auth_token_here
 ```
 
 ## Installation

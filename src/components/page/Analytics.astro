@@ -1,7 +1,7 @@
 ---
 // src/components/Analytics.astro
 // Clean analytics implementation
-// upated 19-08-25 15:01
+// upated 19-08-25 15:22
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
@@ -29,7 +29,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Prevent duplicate sends within 2 seconds
       const now = Date.now();
       const lastSent = sessionStorage.getItem("last_analytics_send");
-      if (lastSent && (now - parseInt(lastSent)) < 2000) {
+      if (lastSent && now - parseInt(lastSent) < 2000) {
         return;
       }
       sessionStorage.setItem("last_analytics_send", now.toString());
@@ -68,7 +68,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         cls: 0,
         fcp: null,
         ttfb: null,
-        duration_ms: 0
+        duration_ms: 0,
       };
 
       // Core Web Vitals tracking
@@ -76,7 +76,8 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       new PerformanceObserver((list) => {
         const lastEntry = list.getEntries().pop();
         if (lastEntry) {
-          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+          metrics.lcp =
+            lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
         }
       }).observe({ type: "largest-contentful-paint", buffered: true });
 
@@ -117,7 +118,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Send metrics after a delay to capture CWV
       setTimeout(() => {
         metrics.duration_ms = Date.now() - startTime;
-        
+
         const blob = new Blob([JSON.stringify(metrics)], {
           type: "application/json",
         });

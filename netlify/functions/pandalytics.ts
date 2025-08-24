@@ -168,7 +168,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
   ];
 
   // Check required environment variables
-  if (!process.env.TURSO_REST_ENDPOINT || !process.env.TURSO_API_TOKEN) {
+  if (
+    !process.env.PANDALYTICS_TURSO_REST_ENDPOINT ||
+    !process.env.PANDALYTICS_TURSO_API_TOKEN
+  ) {
     console.log("❌ Missing required environment variables");
     return {
       statusCode: 500,
@@ -192,10 +195,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
       ],
     };
 
-    const response = await fetch(process.env.TURSO_REST_ENDPOINT, {
+    const response = await fetch(process.env.PANDALYTICS_TURSO_REST_ENDPOINT, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.TURSO_API_TOKEN}`,
+        Authorization: `Bearer ${process.env.PANDALYTICS_TURSO_API_TOKEN}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
