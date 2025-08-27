@@ -10,19 +10,19 @@
     "prettier": "exec prettier . --write"
   },
   "dependencies": {
-    "@astrojs/netlify": "^6.5.8",
+    "@astrojs/netlify": "^6.5.9",
     "@astrojs/sitemap": "^3.5.1",
     "@iconify-json/ri": "^1.2.5",
-    "@libsql/client": "^0.15.12",
-    "astro": "^5.13.3",
+    "@libsql/client": "^0.15.14",
+    "astro": "^5.13.4",
     "astro-capo": "^0.0.1",
     "astro-icon": "^1.1.5",
     "open-props": "^1.7.16",
-    "sass": "^1.90.0",
+    "sass": "^1.91.0",
     "sharp": "^0.34.3"
   },
   "devDependencies": {
-    "@netlify/functions": "^4.2.2",
+    "@netlify/functions": "^4.2.4",
     "@types/node": "^24.3.0",
     "postcss-jit-props": "^1.0.16",
     "prettier": "3.6.2",
