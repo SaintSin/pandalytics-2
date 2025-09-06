@@ -1,7 +1,7 @@
 ---
 // src/components/Analytics.astro
-// Clean analytics implementation
-// upated 250906 11:51
+// Core Web Vitals tracking only
+// Updated 250906 12:15
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
@@ -13,65 +13,31 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1"
     ) {
-      console.log("🚧 Analytics disabled in development");
+      console.log("🚧 Core Web Vitals tracking disabled in development");
       return;
     }
 
-    function generateUUID() {
-      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === "x" ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-      });
-    }
-
-    function initializeAnalytics() {
-      // Prevent duplicate sends within 2 seconds
-      const now = Date.now();
-      const lastSent = sessionStorage.getItem("last_analytics_send");
-      if (lastSent && now - parseInt(lastSent) < 2000) {
+    function trackCoreWebVitals() {
+      // Simple deduplication - once per page load
+      const pageKey = `cwv_tracked_${location.pathname}_${Date.now()}`;
+      if (sessionStorage.getItem(pageKey)) {
         return;
       }
-      sessionStorage.setItem("last_analytics_send", now.toString());
+      sessionStorage.setItem(pageKey, "true");
 
-      // Get or create session
-      let sessionId = sessionStorage.getItem("session_id");
-      if (!sessionId) {
-        sessionId = generateUUID();
-        sessionStorage.setItem("session_id", sessionId);
-        sessionStorage.setItem("session_start", Date.now().toString());
-      }
-
-      // Track page visits
-      const pageKey = `page_${location.pathname}`;
-      const isFirstVisit = !sessionStorage.getItem(pageKey);
-      if (isFirstVisit) {
-        sessionStorage.setItem(pageKey, Date.now().toString());
-      }
-
-      // Basic metrics
-      const startTime = Date.now();
+      // Basic page metrics
       const metrics = {
-        session_id: sessionId,
         site_id: siteId,
-        url: location.href,
         path: location.pathname,
-        referrer: document.referrer || null,
-        screen_width: window.screen.width,
-        screen_height: window.screen.height,
-        user_agent: navigator.userAgent,
-        timestamp: startTime,
-        is_first_visit: isFirstVisit,
-        // CWV placeholders
+        timestamp: Date.now(),
+        // Core Web Vitals
         lcp: null,
         fid: null,
         cls: 0,
         fcp: null,
         ttfb: null,
-        duration_ms: 0,
       };
 
-      // Core Web Vitals tracking
       // LCP - Largest Contentful Paint
       new PerformanceObserver((list) => {
         const lastEntry = list.getEntries().pop();
@@ -113,85 +79,33 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         metrics.ttfb = navEntry.responseStart;
       }
 
-      console.log("📊 Analytics:", metrics);
+      console.log("📊 Core Web Vitals:", metrics);
 
-      // Function to send analytics data
-      function sendAnalytics(finalDuration = null) {
-        const currentMetrics = { ...metrics };
-        if (finalDuration !== null) {
-          currentMetrics.duration_ms = finalDuration;
-        } else {
-          currentMetrics.duration_ms = Date.now() - startTime;
-        }
-
-        const blob = new Blob([JSON.stringify(currentMetrics)], {
+      // Send metrics after delay to capture CWV
+      setTimeout(() => {
+        const blob = new Blob([JSON.stringify(metrics)], {
           type: "application/json",
         });
+
+        console.log(`📊 Sending CWV for ${metrics.path}`);
 
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
         } else {
           fetch("/.netlify/functions/pandalytics", {
             method: "POST",
-            body: JSON.stringify(currentMetrics),
+            body: JSON.stringify(metrics),
             headers: { "Content-Type": "application/json" },
             keepalive: true,
           }).catch(() => {});
         }
-      }
-
-      // Track actual time on page using Page Visibility API
-      let pageStartTime = startTime;
-      let totalTimeOnPage = 0;
-      let isPageVisible = !document.hidden;
-
-      // Handle page visibility changes
-      document.addEventListener("visibilitychange", () => {
-        const now = Date.now();
-        if (document.hidden) {
-          // Page became hidden, add time spent visible
-          if (isPageVisible) {
-            totalTimeOnPage += now - pageStartTime;
-            isPageVisible = false;
-          }
-        } else {
-          // Page became visible again
-          pageStartTime = now;
-          isPageVisible = true;
-        }
-      });
-
-      // Handle page unload events for final duration
-      const handlePageExit = () => {
-        const now = Date.now();
-        if (isPageVisible) {
-          totalTimeOnPage += now - pageStartTime;
-        }
-        sendAnalytics(totalTimeOnPage);
-      };
-
-      // Multiple events to catch different types of navigation
-      window.addEventListener("beforeunload", handlePageExit);
-      window.addEventListener("pagehide", handlePageExit);
-
-      // For Astro view transitions
-      document.addEventListener("astro:before-preparation", handlePageExit);
-
-      // Send initial metrics after delay to capture CWV (but with improved duration)
-      setTimeout(() => {
-        const now = Date.now();
-        if (isPageVisible) {
-          totalTimeOnPage += now - pageStartTime;
-          pageStartTime = now;
-        }
-        sendAnalytics(totalTimeOnPage);
-      }, 1000);
+      }, 1500);
     }
 
-    // Initialize on page load
-    initializeAnalytics();
+    // Track on page load
+    trackCoreWebVitals();
 
     // Handle Astro view transitions
-    document.addEventListener("astro:page-load", initializeAnalytics);
+    document.addEventListener("astro:page-load", trackCoreWebVitals);
   })();
 </script>
