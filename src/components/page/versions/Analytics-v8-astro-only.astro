@@ -1,7 +1,14 @@
 ---
-// src/components/Analytics.astro - ASTRO ONLY (SIMPLIFIED)
-// Core Web Vitals tracking only
-// Updated 250906 16:00 - Simplified for Astro sites with view transitions only
+// ANALYTICS VERSION 8 - ASTRO ONLY (SIMPLIFIED)
+// Date: 250906 16:00
+// Status: SIMPLIFIED - For Astro sites with view transitions only
+// Key Simplifications:
+// - No hybrid approach (initial load vs SPA detection)
+// - Only use astro:page-load event (fires for all navigation)
+// - Always use non-buffered Performance Observers (fresh metrics per page)
+// - Simplified session management
+// - Per-page time-based deduplication only
+// Theory: This should eliminate duplicate CWV values completely
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---

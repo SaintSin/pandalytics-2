@@ -1,5 +1,5 @@
 // netlify/functions/pandalytics.ts
-// Last updated: 2024-09-06 11:50
+// Last updated: 2025-09-06 15:50 - Fixed browser detection to use client-sent value
 
 import type { Handler, HandlerEvent } from "@netlify/functions";
 
@@ -13,6 +13,7 @@ interface MetricData {
   screen_width?: number;
   screen_height?: number;
   user_agent?: string;
+  browser?: string; // Client-parsed browser info
   lcp?: number;
   cls?: number;
   fid?: number;
@@ -64,6 +65,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
     screen_width,
     screen_height,
     user_agent,
+    browser: clientBrowser,
     lcp,
     cls,
     fid,
@@ -115,7 +117,8 @@ export const handler: Handler = async (event: HandlerEvent) => {
     }
   };
 
-  const browser = parseBrowser(user_agent);
+  // Use client-sent browser if available, fallback to server-side parsing
+  const browser = clientBrowser || parseBrowser(user_agent);
   const timestamp = Date.now();
 
   // SQL for upsert session
