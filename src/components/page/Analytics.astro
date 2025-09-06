@@ -9,7 +9,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     // Debug toggle - set to false for production
-    const DEBUG = false;
+    const DEBUG = true;
 
     const log = (...args) => DEBUG && console.log(...args);
     const warn = (...args) => DEBUG && console.warn(...args);
@@ -218,13 +218,17 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
           let maxDelay = 0;
           for (const entry of entries) {
-            if (entry.interactionId && entry.processingEnd && entry.startTime) {
-              const delay = entry.processingEnd - entry.startTime;
+            if (entry.interactionId && entry.duration) {
+              const delay = entry.duration;
               maxDelay = Math.max(maxDelay, delay);
               log("📊 INP interaction:", {
                 type: entry.name,
                 delay: delay,
                 interactionId: entry.interactionId,
+                startTime: entry.startTime,
+                processingStart: entry.processingStart,
+                processingEnd: entry.processingEnd,
+                duration: entry.duration,
               });
             }
           }
@@ -235,7 +239,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
           } else if (entries.length === 0) {
             log("✅ INP: No interactions recorded");
           }
-        }).observe({ type: "event", buffered: true });
+        }).observe({ type: "event", buffered: true, durationThreshold: 0 });
         log("✅ INP observer registered");
       } catch (error) {
         error("❌ INP observer failed:", error.message);
