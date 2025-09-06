@@ -25,11 +25,19 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       }
       sessionStorage.setItem(pageKey, "true");
 
-      // Basic page metrics
+      // Generate minimal session ID for this page load
+      let sessionId = sessionStorage.getItem("cwv_session");
+      if (!sessionId) {
+        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionStorage.setItem("cwv_session", sessionId);
+      }
+
+      // Basic page metrics (matching function interface)
       const metrics = {
+        session_id: sessionId,
         site_id: siteId,
+        url: location.href,
         path: location.pathname,
-        timestamp: Date.now(),
         // Core Web Vitals
         lcp: null,
         fid: null,
