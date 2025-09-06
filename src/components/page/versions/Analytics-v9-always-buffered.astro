@@ -1,7 +1,22 @@
 ---
-// src/components/Analytics.astro - ASTRO ONLY (SIMPLIFIED)
-// Core Web Vitals tracking only
-// Updated 250906 16:00 - Simplified for Astro sites with view transitions only
+// ANALYTICS VERSION 9 - ALWAYS BUFFERED FOR ASTRO
+// Date: 250906 16:52
+// Status: TESTING - Always use buffered observers for Astro view transitions
+// Key Discovery: Astro view transitions don't trigger new Performance Observer events
+// Safari TP logs showed all CWV as null with non-buffered observers
+// Changes from V8:
+// - Removed first page vs subsequent page detection
+// - Always use buffered observers for ALL metrics (LCP, FCP, CLS, FID)
+// - Simplified logging
+// Issues Fixed:
+// - ✅ Should capture real CWV data now (LCP, FCP, etc.)
+// - ✅ Browser detection working ("Safari 26")  
+// - ✅ TTFB captured (456ms)
+// Remaining Challenge:
+// - ❌ Will likely return to identical CWV values across pages
+// - This is fundamental to Astro view transitions - they don't create new performance entries
+// Theory: For Astro sites, view transitions show same CWV as initial page load
+//         This might be correct behavior since DOM updates without full navigation
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
@@ -90,26 +105,10 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       
       // LCP - always buffered for Astro
       new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        console.log("🔍 LCP Observer fired - entries:", entries.length);
-        
-        if (entries.length > 0) {
-          console.log("📊 LCP entries:", entries.map(e => ({
-            renderTime: e.renderTime,
-            loadTime: e.loadTime, 
-            startTime: e.startTime,
-            element: e.element?.tagName || 'unknown'
-          })));
-        } else {
-          console.warn("⚠️ LCP Observer fired but no entries found");
-        }
-        
-        const lastEntry = entries.pop();
+        const lastEntry = list.getEntries().pop();
         if (lastEntry) {
           metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
-          console.log("✅ LCP set to:", metrics.lcp);
-        } else {
-          console.warn("❌ No LCP entry to process");
+          console.log("✅ LCP:", metrics.lcp);
         }
       }).observe({ type: "largest-contentful-paint", buffered: true });
 
@@ -125,34 +124,20 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
       // CLS - use buffered for cumulative score
       new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        console.log("🔍 CLS Observer fired - entries:", entries.length);
-        
-        for (const entry of entries) {
+        for (const entry of list.getEntries()) {
           if (!entry.hadRecentInput && entry.value !== undefined) {
             metrics.cls += entry.value;
             console.log("✅ CLS delta:", entry.value, "| Total:", metrics.cls);
           }
         }
-        
-        if (entries.length === 0) {
-          console.log("✅ CLS: No layout shifts detected (good performance!)");
-        }
       }).observe({ type: "layout-shift", buffered: true });
 
       // FID - use buffered for any recorded input delay
       new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        console.log("🔍 FID Observer fired - entries:", entries.length);
-        
-        const firstInput = entries[0];
+        const firstInput = list.getEntries()[0];
         if (firstInput && firstInput.processingStart) {
           metrics.fid = firstInput.processingStart - firstInput.startTime;
-          console.log("✅ FID:", metrics.fid, "ms");
-        } else if (entries.length === 0) {
-          console.log("✅ FID: No input delay recorded (good performance!)");
-        } else {
-          console.log("⚠️ FID entry exists but no processingStart:", firstInput);
+          console.log("✅ FID:", metrics.fid);
         }
       }).observe({ type: "first-input", buffered: true });
 

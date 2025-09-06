@@ -34,14 +34,29 @@ This directory contains historical versions of the Analytics.astro component to 
 **Key Changes**: Replaced permanent blocking with 60-second cooldown per page  
 **Benefits**: Allows retesting while preventing spam, clear console feedback
 
-### V6 - Current Version (HAS BUG)
-**Status**: ⚠️ WORKING but has JavaScript error  
+### V6 - Previous Version (HAD BUG)
+**Status**: ⚠️ WORKING but had JavaScript error  
 **Key Issues**: 
 - ❌ **CRITICAL BUG**: `ReferenceError: Can't find variable: currentMetrics` 
 - Error at line ~211 in timeout function
 - Variable is named `metrics` but code references `currentMetrics`
-- ❌ Browser detection still "Unknown" in database
+- ❌ Browser detection "Unknown" in database
 - ✅ All other functionality works end-to-end
+
+### V7 - Debug Version (NOT DEPLOYED)
+**Status**: 📝 DEBUGGING - Extensive logging to identify duplicate values  
+**Purpose**: Added comprehensive console logging to track Performance Observer behavior
+
+### V8 - Astro Only Simplified (HAD ISSUES)
+**Status**: ❌ PROBLEMATIC - All CWV values came back null  
+**Key Changes**: Simplified for Astro-only, tried non-buffered observers
+**Issues**: Astro view transitions don't trigger new Performance Observer events
+
+### V9 - Always Buffered (CURRENT)
+**Status**: 🔄 TESTING - Always use buffered observers for Astro view transitions  
+**Key Discovery**: Safari TP logs showed all CWV null with non-buffered observers
+**Key Changes**: Always use buffered observers for ALL metrics (LCP, FCP, CLS, FID)
+**Expected Issue**: Will likely return identical CWV values across pages (fundamental to Astro view transitions)
 
 ## Key Technical Learnings
 
