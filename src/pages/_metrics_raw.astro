@@ -13,8 +13,6 @@ const sql = `
     s.country_code,
     s.screen_width,
     s.screen_height,
-    p.duration_ms,
-    s.total_pageviews,
     p.timestamp,
     p.lcp,
     p.cls,
@@ -172,8 +170,6 @@ try {
               <th>Path</th>
               <th>Country</th>
               <th>Screen</th>
-              <th>Duration (ms)</th>
-              <th>Pageviews</th>
               <th>LCP</th>
               <th>CLS</th>
               <th>FID</th>
@@ -194,16 +190,14 @@ try {
                 <td>
                   {row[5]}×{row[6]}
                 </td>
-                <td>{row[7]}</td>
-                <td>{row[8]}</td>
-                <td set:html={formatCWV("lcp", row[10])} />
-                <td set:html={formatCWV("cls", row[11])} />
-                <td set:html={formatCWV("fid", row[12])} />
-                <td set:html={formatCWV("fcp", row[13])} />
-                <td set:html={formatCWV("ttfb", row[14])} />
-                <td set:html={formatCWV("inp", row[15])} />
-                <td>{row[16] || "Unknown"}</td>
-                <td>{new Date(row[9]).toLocaleString()}</td>
+                <td set:html={formatCWV("lcp", row[8])} />
+                <td set:html={formatCWV("cls", row[9])} />
+                <td set:html={formatCWV("fid", row[10])} />
+                <td set:html={formatCWV("fcp", row[11])} />
+                <td set:html={formatCWV("ttfb", row[12])} />
+                <td set:html={formatCWV("inp", row[13])} />
+                <td>{row[14] || "Unknown"}</td>
+                <td>{new Date(row[7]).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>

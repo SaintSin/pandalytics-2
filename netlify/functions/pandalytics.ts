@@ -20,9 +20,7 @@ interface MetricData {
   fcp?: number;
   ttfb?: number;
   inp?: number;
-  duration_ms?: number;
   bounce?: boolean;
-  pageviews_in_session?: number;
 }
 
 export const handler: Handler = async (event: HandlerEvent) => {
@@ -72,7 +70,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
     fcp,
     ttfb,
     inp,
-    duration_ms,
   } = bodyData;
 
   // Extract country from Netlify headers if not provided in data
@@ -139,9 +136,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
   // SQL for pageview
   const pageviewSql = `
     INSERT INTO pageviews (
-      session_id, url, path, referrer, timestamp, duration_ms,
+      session_id, url, path, referrer, timestamp,
       lcp, cls, fid, fcp, ttfb, inp
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const sessionParams = [
@@ -161,7 +158,6 @@ export const handler: Handler = async (event: HandlerEvent) => {
     path || null,
     referrer || null,
     timestamp,
-    duration_ms ? Math.round(duration_ms) : 0,
     lcp || null,
     cls || null,
     fid || null,
