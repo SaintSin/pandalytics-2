@@ -1,0 +1,110 @@
+---
+// ANALYTICS VERSION 5 - TIME-BASED DEDUPLICATION  
+// Date: After discovering overly aggressive session blocking prevented retesting
+// Status: MAJOR IMPROVEMENT - Allows retesting while preventing spam
+// Changes from V4:
+// - ✅ Replaced permanent session blocking with 60-second cooldown per page
+// - ✅ Added comprehensive logging for deduplication logic
+// - ✅ Allows retesting pages after cooldown period
+// - ✅ Shows time since last send in console
+// Issues Fixed:
+// - ✅ Can now retest pages without clearing session storage
+// - ✅ Prevents spam while allowing legitimate retesting
+// - ✅ Clear console feedback about deduplication decisions
+// Remaining Issues:
+// - ❌ Browser detection still "Unknown" in database
+// - ❌ Some missing CWV data  
+// - ❌ JavaScript error "currentMetrics is not defined" (introduced in next version)
+
+const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
+---
+
+<script define:vars={{ siteId }} is:inline>
+  (function () {
+    console.log("🚀 CWV tracking with time-based deduplication loaded");
+    
+    if (
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1"
+    ) {
+      console.log("🚧 Tracking disabled in development");
+      return;
+    }
+
+    function trackCoreWebVitals() {
+      let sessionId = sessionStorage.getItem("cwv_session");
+      if (!sessionId) {
+        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionStorage.setItem("cwv_session", sessionId);
+      }
+
+      const isInitialLoad = !sessionStorage.getItem("cwv_initialized");
+      const currentPath = location.pathname;
+      
+      // NEW: Time-based deduplication instead of permanent blocking!
+      const now = Date.now();
+      const lastSentKey = `cwv_last_sent_${currentPath}`;
+      const lastSent = parseInt(sessionStorage.getItem(lastSentKey) || "0");
+      const timeSinceLastSent = now - lastSent;
+      const cooldownPeriod = 60 * 1000; // 60 seconds
+      
+      console.log("🔍 Time-based check:", { 
+        currentPath, 
+        timeSinceLastSent: Math.round(timeSinceLastSent / 1000) + "s", 
+        cooldownPeriod: cooldownPeriod / 1000 + "s",
+        shouldSkip: timeSinceLastSent < cooldownPeriod 
+      });
+      
+      if (timeSinceLastSent < cooldownPeriod) {
+        console.log(`⏭️ Skipping - sent ${Math.round(timeSinceLastSent / 1000)}s ago`);
+        return;
+      }
+
+      sessionStorage.setItem("cwv_initialized", "true");
+
+      const parseBrowser = (userAgent) => {
+        // [Browser parsing logic...]
+      };
+
+      const browser = parseBrowser(navigator.userAgent);
+
+      const metrics = {
+        session_id: sessionId,
+        site_id: siteId,
+        url: location.href,
+        path: location.pathname,
+        user_agent: navigator.userAgent,
+        browser: browser,
+        screen_width: window.screen.width,
+        screen_height: window.screen.height,
+        lcp: null,
+        fid: null,
+        cls: 0,
+        fcp: null,
+        ttfb: null,
+      };
+
+      // Hybrid approach continues...
+      
+      setTimeout(() => {
+        const blob = new Blob([JSON.stringify(metrics)], {
+          type: "application/json",
+        });
+
+        console.log(`📊 Sending CWV for ${metrics.path}`);
+
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
+        }
+
+        // NEW: Mark with timestamp instead of boolean
+        const lastSentKey = `cwv_last_sent_${metrics.path}`;
+        sessionStorage.setItem(lastSentKey, Date.now().toString());
+        console.log("✅ Marked as sent for", metrics.path);
+      }, 1500);
+    }
+
+    trackCoreWebVitals();
+    document.addEventListener("astro:page-load", trackCoreWebVitals);
+  })();
+</script>
