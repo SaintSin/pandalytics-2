@@ -1,7 +1,7 @@
 ---
 // src/components/Analytics.astro
 // Clean analytics implementation
-// upated 19-08-25 15:22
+// upated 250906 11:51
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
@@ -115,11 +115,16 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
       console.log("📊 Analytics:", metrics);
 
-      // Send metrics after a delay to capture CWV
-      setTimeout(() => {
-        metrics.duration_ms = Date.now() - startTime;
+      // Function to send analytics data
+      function sendAnalytics(finalDuration = null) {
+        const currentMetrics = { ...metrics };
+        if (finalDuration !== null) {
+          currentMetrics.duration_ms = finalDuration;
+        } else {
+          currentMetrics.duration_ms = Date.now() - startTime;
+        }
 
-        const blob = new Blob([JSON.stringify(metrics)], {
+        const blob = new Blob([JSON.stringify(currentMetrics)], {
           type: "application/json",
         });
 
@@ -128,11 +133,58 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         } else {
           fetch("/.netlify/functions/pandalytics", {
             method: "POST",
-            body: JSON.stringify(metrics),
+            body: JSON.stringify(currentMetrics),
             headers: { "Content-Type": "application/json" },
             keepalive: true,
           }).catch(() => {});
         }
+      }
+
+      // Track actual time on page using Page Visibility API
+      let pageStartTime = startTime;
+      let totalTimeOnPage = 0;
+      let isPageVisible = !document.hidden;
+
+      // Handle page visibility changes
+      document.addEventListener("visibilitychange", () => {
+        const now = Date.now();
+        if (document.hidden) {
+          // Page became hidden, add time spent visible
+          if (isPageVisible) {
+            totalTimeOnPage += now - pageStartTime;
+            isPageVisible = false;
+          }
+        } else {
+          // Page became visible again
+          pageStartTime = now;
+          isPageVisible = true;
+        }
+      });
+
+      // Handle page unload events for final duration
+      const handlePageExit = () => {
+        const now = Date.now();
+        if (isPageVisible) {
+          totalTimeOnPage += now - pageStartTime;
+        }
+        sendAnalytics(totalTimeOnPage);
+      };
+
+      // Multiple events to catch different types of navigation
+      window.addEventListener("beforeunload", handlePageExit);
+      window.addEventListener("pagehide", handlePageExit);
+
+      // For Astro view transitions
+      document.addEventListener("astro:before-preparation", handlePageExit);
+
+      // Send initial metrics after delay to capture CWV (but with improved duration)
+      setTimeout(() => {
+        const now = Date.now();
+        if (isPageVisible) {
+          totalTimeOnPage += now - pageStartTime;
+          pageStartTime = now;
+        }
+        sendAnalytics(totalTimeOnPage);
       }, 1000);
     }
 
