@@ -16,8 +16,11 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 Astro-only Analytics loaded");
-    
-    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+
+    if (
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1"
+    ) {
       console.log("🚧 Disabled in development");
       return;
     }
@@ -26,22 +29,28 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Simple session management - one per browser session
       let sessionId = sessionStorage.getItem("astro_cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("astro_cwv_session", sessionId);
         console.log("🆕 New session:", sessionId);
       }
 
       const currentPath = location.pathname;
-      
+
       // Per-page time-based deduplication (60 seconds)
       const now = Date.now();
       const lastSentKey = `cwv_sent_${currentPath}`;
       const lastSent = parseInt(sessionStorage.getItem(lastSentKey) || "0");
       const timeSinceLastSent = now - lastSent;
       const cooldown = 60000; // 60s
-      
+
       if (timeSinceLastSent < cooldown) {
-        console.log(`⏭️ Skip ${currentPath} - sent ${Math.round(timeSinceLastSent/1000)}s ago`);
+        console.log(
+          `⏭️ Skip ${currentPath} - sent ${Math.round(timeSinceLastSent / 1000)}s ago`,
+        );
         return;
       }
 
@@ -88,17 +97,22 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // LCP
       new PerformanceObserver((list) => {
         // Only capture LCP entries that occurred after this page load
-        const entries = list.getEntries().filter(e => e.startTime > captureStart);
+        const entries = list
+          .getEntries()
+          .filter((e) => e.startTime > captureStart);
         const lastEntry = entries.pop();
         if (lastEntry) {
-          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+          metrics.lcp =
+            lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
           console.log("✅ Fresh LCP:", metrics.lcp);
         }
       }).observe({ type: "largest-contentful-paint", buffered: false });
 
-      // FCP  
+      // FCP
       new PerformanceObserver((list) => {
-        const entries = list.getEntries().filter(e => e.startTime > captureStart);
+        const entries = list
+          .getEntries()
+          .filter((e) => e.startTime > captureStart);
         for (const entry of entries) {
           if (entry.name === "first-contentful-paint") {
             metrics.fcp = entry.startTime;
@@ -110,16 +124,27 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // CLS - only new layout shifts
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!entry.hadRecentInput && entry.value !== undefined && entry.startTime > captureStart) {
+          if (
+            !entry.hadRecentInput &&
+            entry.value !== undefined &&
+            entry.startTime > captureStart
+          ) {
             metrics.cls += entry.value;
-            console.log("✅ Fresh CLS delta:", entry.value, "| Total:", metrics.cls);
+            console.log(
+              "✅ Fresh CLS delta:",
+              entry.value,
+              "| Total:",
+              metrics.cls,
+            );
           }
         }
       }).observe({ type: "layout-shift", buffered: false });
 
       // FID - capture first input after this page
       new PerformanceObserver((list) => {
-        const entries = list.getEntries().filter(e => e.startTime > captureStart);
+        const entries = list
+          .getEntries()
+          .filter((e) => e.startTime > captureStart);
         const firstInput = entries[0];
         if (firstInput && firstInput.processingStart) {
           metrics.fid = firstInput.processingStart - firstInput.startTime;
@@ -135,11 +160,13 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
           browser: metrics.browser,
           lcp: metrics.lcp,
           fcp: metrics.fcp,
-          cls: metrics.cls
+          cls: metrics.cls,
         });
 
-        const blob = new Blob([JSON.stringify(metrics)], { type: "application/json" });
-        
+        const blob = new Blob([JSON.stringify(metrics)], {
+          type: "application/json",
+        });
+
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
           console.log("📡 Sent via beacon");
@@ -164,7 +191,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       console.log("🎯 astro:page-load fired");
       trackPageCWV();
     });
-    
+
     console.log("✅ Astro Analytics ready");
   })();
 </script>

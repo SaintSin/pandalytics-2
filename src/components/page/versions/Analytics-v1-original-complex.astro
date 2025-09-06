@@ -2,14 +2,14 @@
 // ANALYTICS VERSION 1 - ORIGINAL COMPLEX VERSION
 // Date: Early conversation
 // Status: PROBLEMATIC - Caused identical CWV values across pages
-// Issues: 
+// Issues:
 // - Used buffered Performance Observers for all metrics
 // - No differentiation between initial load vs SPA navigation
 // - Overly complex with pageview tracking, duration, etc.
 // - Browser detection on server-side only
 // - Permanent session deduplication (too aggressive)
 // Key Problems:
-// - All pages showed identical CWV values because buffered observers 
+// - All pages showed identical CWV values because buffered observers
 //   captured same values from initial page load
 // - Complex analytics caused confusion and bugs
 // - Missing browser version information
@@ -20,7 +20,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 Analytics component loaded, hostname:", location.hostname);
-    
+
     // Skip in development
     if (
       location.hostname === "localhost" ||
@@ -34,7 +34,8 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Generate session ID
       let sessionId = sessionStorage.getItem("analytics_session");
       if (!sessionId) {
-        sessionId = Date.now() + "_" + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          Date.now() + "_" + Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("analytics_session", sessionId);
       }
 

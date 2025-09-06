@@ -1,6 +1,6 @@
 ---
 // ANALYTICS VERSION 3 - HYBRID APPROACH
-// Date: After explaining SPA vs MPA and implementing hybrid solution  
+// Date: After explaining SPA vs MPA and implementing hybrid solution
 // Status: MAJOR BREAKTHROUGH - Fixed identical CWV values!
 // Key Innovation: Different strategies for initial load vs SPA navigation
 // Changes from V2:
@@ -22,7 +22,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 Hybrid CWV tracking loaded");
-    
+
     if (
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1"
@@ -34,13 +34,17 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
     function trackCoreWebVitals() {
       let sessionId = sessionStorage.getItem("cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("cwv_session", sessionId);
       }
 
       // BREAKTHROUGH: Detect initial load vs SPA navigation
       const isInitialLoad = !sessionStorage.getItem("cwv_initialized");
-      
+
       const trackingKey = `cwv_tracked_${sessionId}_${location.pathname}`;
       if (sessionStorage.getItem(trackingKey)) {
         console.log("⏭️ CWV already tracked for this page");
@@ -67,7 +71,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // HYBRID APPROACH: Different strategies!
       if (isInitialLoad) {
         console.log("📊 Initial page load - using buffered observers");
-        
+
         // Use buffered observers for complete CWV capture
         new PerformanceObserver((list) => {
           const lastEntry = list.getEntries().pop();
@@ -77,14 +81,15 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         }).observe({ type: "largest-contentful-paint", buffered: true });
 
         // [Other buffered observers...]
-        
       } else {
         console.log("📊 SPA navigation - using fresh observers");
         const navigationStart = performance.now();
-        
+
         // Use non-buffered observers with timestamp filtering
         new PerformanceObserver((list) => {
-          const entries = list.getEntries().filter(entry => entry.startTime > navigationStart);
+          const entries = list
+            .getEntries()
+            .filter((entry) => entry.startTime > navigationStart);
           const lastEntry = entries.pop();
           if (lastEntry) {
             metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;

@@ -1,7 +1,7 @@
 ---
 // ANALYTICS VERSION 4 - ADDED BROWSER DETECTION
 // Date: After user requested browser version tracking, especially Chrome versions
-// Status: PARTIALLY WORKING - Client-side parsing works, but database still shows "Unknown"  
+// Status: PARTIALLY WORKING - Client-side parsing works, but database still shows "Unknown"
 // Changes from V3:
 // - ✅ Added comprehensive client-side browser parsing with versions
 // - ✅ Chrome, Firefox, Edge, Safari version detection
@@ -10,7 +10,7 @@
 // - ✅ Browser version detection in console logs
 // Remaining Issues:
 // - ❌ Database still shows "Unknown" despite console showing correct values
-// - ❌ Still permanent session blocking  
+// - ❌ Still permanent session blocking
 // - ❌ Some missing CWV data
 // Key Insight: Browser parsing works client-side but isn't reaching database properly
 
@@ -20,7 +20,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 CWV + Browser tracking loaded");
-    
+
     if (
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1"
@@ -32,12 +32,16 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
     function trackCoreWebVitals() {
       let sessionId = sessionStorage.getItem("cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("cwv_session", sessionId);
       }
 
       const isInitialLoad = !sessionStorage.getItem("cwv_initialized");
-      
+
       const trackingKey = `cwv_tracked_${sessionId}_${location.pathname}`;
       if (sessionStorage.getItem(trackingKey)) {
         console.log("⏭️ Already tracked");

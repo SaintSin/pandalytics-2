@@ -21,7 +21,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 Analytics component loaded, hostname:", location.hostname);
-    
+
     // Skip in development
     if (
       location.hostname === "localhost" ||
@@ -35,7 +35,11 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Generate minimal session ID for this page load
       let sessionId = sessionStorage.getItem("cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("cwv_session", sessionId);
       }
 
@@ -43,23 +47,25 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       const isInitialLoad = !sessionStorage.getItem("cwv_initialized");
       const currentPath = location.pathname;
       const lastPath = sessionStorage.getItem("cwv_last_path");
-      
+
       // Time-based deduplication - prevent duplicate CWV within 60 seconds for same page
       const now = Date.now();
       const lastSentKey = `cwv_last_sent_${currentPath}`;
       const lastSent = parseInt(sessionStorage.getItem(lastSentKey) || "0");
       const timeSinceLastSent = now - lastSent;
       const cooldownPeriod = 60 * 1000; // 60 seconds
-      
-      console.log("🔍 Checking time-based deduplication:", { 
-        currentPath, 
-        timeSinceLastSent: Math.round(timeSinceLastSent / 1000) + "s", 
+
+      console.log("🔍 Checking time-based deduplication:", {
+        currentPath,
+        timeSinceLastSent: Math.round(timeSinceLastSent / 1000) + "s",
         cooldownPeriod: cooldownPeriod / 1000 + "s",
-        shouldSkip: timeSinceLastSent < cooldownPeriod 
+        shouldSkip: timeSinceLastSent < cooldownPeriod,
       });
-      
+
       if (timeSinceLastSent < cooldownPeriod) {
-        console.log(`⏭️  Skipping - already sent CWV for ${currentPath} ${Math.round(timeSinceLastSent / 1000)}s ago (cooldown: ${cooldownPeriod / 1000}s)`);
+        console.log(
+          `⏭️  Skipping - already sent CWV for ${currentPath} ${Math.round(timeSinceLastSent / 1000)}s ago (cooldown: ${cooldownPeriod / 1000}s)`,
+        );
         return;
       }
 
@@ -93,7 +99,8 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       const browser = parseBrowser(navigator.userAgent);
 
       // Basic page metrics (matching function interface)
-      const metrics = {  // ✅ Variable name is 'metrics'
+      const metrics = {
+        // ✅ Variable name is 'metrics'
         session_id: sessionId,
         site_id: siteId,
         url: location.href,

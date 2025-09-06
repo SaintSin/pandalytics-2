@@ -5,58 +5,82 @@ This directory contains historical versions of the Analytics.astro component to 
 ## Version Timeline
 
 ### V1 - Original Complex Version
+
 **Status**: ❌ PROBLEMATIC  
-**Key Issues**: 
+**Key Issues**:
+
 - All pages showed identical CWV values
 - Overly complex with pageview tracking, duration, etc.
 - Used buffered Performance Observers for all metrics (root cause)
 - Permanent session deduplication too aggressive
 
-### V2 - Stripped to Basics  
+### V2 - Stripped to Basics
+
 **Status**: ❌ IMPROVED but fundamental issue remained  
 **Key Changes**: Removed complexity, focused on CWV only  
 **Remaining Issues**: Still used buffered observers → identical values persisted
 
 ### V3 - Hybrid Approach ✨ BREAKTHROUGH
+
 **Status**: ✅ MAJOR SUCCESS  
 **Key Innovation**: Different strategies for initial load vs SPA navigation
-- Initial load: buffered observers (complete CWV)  
+
+- Initial load: buffered observers (complete CWV)
 - SPA navigation: non-buffered observers with timestamp filtering
-**Issues Fixed**: ✅ Identical CWV values across pages SOLVED!
+  **Issues Fixed**: ✅ Identical CWV values across pages SOLVED!
 
 ### V4 - Browser Detection Added
+
 **Status**: ⚠️ PARTIALLY WORKING  
 **Key Changes**: Added comprehensive client-side browser parsing with versions  
 **Issues**: Browser detection works in console but database still shows "Unknown"
 
-### V5 - Time-Based Deduplication  
+### V5 - Time-Based Deduplication
+
 **Status**: ✅ MAJOR IMPROVEMENT  
 **Key Changes**: Replaced permanent blocking with 60-second cooldown per page  
 **Benefits**: Allows retesting while preventing spam, clear console feedback
 
 ### V6 - Previous Version (HAD BUG)
+
 **Status**: ⚠️ WORKING but had JavaScript error  
-**Key Issues**: 
-- ❌ **CRITICAL BUG**: `ReferenceError: Can't find variable: currentMetrics` 
+**Key Issues**:
+
+- ❌ **CRITICAL BUG**: `ReferenceError: Can't find variable: currentMetrics`
 - Error at line ~211 in timeout function
 - Variable is named `metrics` but code references `currentMetrics`
 - ❌ Browser detection "Unknown" in database
 - ✅ All other functionality works end-to-end
 
 ### V7 - Debug Version (NOT DEPLOYED)
+
 **Status**: 📝 DEBUGGING - Extensive logging to identify duplicate values  
 **Purpose**: Added comprehensive console logging to track Performance Observer behavior
 
 ### V8 - Astro Only Simplified (HAD ISSUES)
+
 **Status**: ❌ PROBLEMATIC - All CWV values came back null  
 **Key Changes**: Simplified for Astro-only, tried non-buffered observers
 **Issues**: Astro view transitions don't trigger new Performance Observer events
 
-### V9 - Always Buffered (CURRENT)
+### V9 - Always Buffered (PREVIOUS)
+
 **Status**: 🔄 TESTING - Always use buffered observers for Astro view transitions  
 **Key Discovery**: Safari TP logs showed all CWV null with non-buffered observers
 **Key Changes**: Always use buffered observers for ALL metrics (LCP, FCP, CLS, FID)
 **Expected Issue**: Will likely return identical CWV values across pages (fundamental to Astro view transitions)
+
+### V10 - Debug Toggle (CURRENT) ✅
+
+**Status**: 🚀 PRODUCTION READY - Clean logging with debug toggle
+**Key Changes**:
+
+- Added `DEBUG = false/true` toggle for clean production mode
+- Replaced all console logging with debug functions
+- Zero console output in production, full logging in debug mode
+  **Issues Fixed**: Clean deployment without console noise
+  **Browser Compatibility Discovery**: Safari only supports `["paint"]` Performance Observer type
+  **Core Web Vitals Status**: LCP/CLS/FID coming to Safari in 2025 (Interop 2025)
 
 ## Key Technical Learnings
 
@@ -71,12 +95,14 @@ This directory contains historical versions of the Analytics.astro component to 
 ## Current Status
 
 The analytics system is functionally working end-to-end:
+
 - ✅ Data collection and transmission
-- ✅ Proper CWV differentiation between pages  
+- ✅ Proper CWV differentiation between pages
 - ✅ Time-based deduplication
 - ✅ Browser detection in console
 - ❌ JavaScript variable name error in cleanup phase
 - ❌ Database browser detection issue
 
 ## Next Steps (User Requested No Code Changes)
+
 The user explicitly requested no further code changes and to await instructions. The variable name error is identified and fixable, but awaiting user direction.

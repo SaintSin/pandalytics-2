@@ -1,17 +1,27 @@
 ---
 // src/components/Analytics.astro - ASTRO ONLY (SIMPLIFIED)
 // Core Web Vitals tracking only
-// Updated 250906 16:00 - Simplified for Astro sites with view transitions only
+// Updated 250906 17:05 - Added debug toggle, clean production mode
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
 
 <script define:vars={{ siteId }} is:inline>
   (function () {
-    console.log("🚀 Astro-only Analytics loaded");
-    
-    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-      console.log("🚧 Disabled in development");
+    // Debug toggle - set to false for production
+    const DEBUG = false;
+
+    const log = (...args) => DEBUG && console.log(...args);
+    const warn = (...args) => DEBUG && console.warn(...args);
+    const error = (...args) => DEBUG && console.error(...args);
+
+    log("🚀 Astro-only Analytics loaded");
+
+    if (
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1"
+    ) {
+      log("🚧 Disabled in development");
       return;
     }
 
@@ -19,22 +29,28 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Simple session management - one per browser session
       let sessionId = sessionStorage.getItem("astro_cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("astro_cwv_session", sessionId);
-        console.log("🆕 New session:", sessionId);
+        log("🆕 New session:", sessionId);
       }
 
       const currentPath = location.pathname;
-      
+
       // Per-page time-based deduplication (60 seconds)
       const now = Date.now();
       const lastSentKey = `cwv_sent_${currentPath}`;
       const lastSent = parseInt(sessionStorage.getItem(lastSentKey) || "0");
       const timeSinceLastSent = now - lastSent;
       const cooldown = 60000; // 60s
-      
+
       if (timeSinceLastSent < cooldown) {
-        console.log(`⏭️ Skip ${currentPath} - sent ${Math.round(timeSinceLastSent/1000)}s ago`);
+        log(
+          `⏭️ Skip ${currentPath} - sent ${Math.round(timeSinceLastSent / 1000)}s ago`,
+        );
         return;
       }
 
@@ -56,7 +72,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       };
 
       const browser = parseBrowser(navigator.userAgent);
-      console.log("🔍 Browser:", browser, "| Path:", currentPath);
+      log("🔍 Browser:", browser, "| Path:", currentPath);
 
       const metrics = {
         session_id: sessionId,
@@ -75,90 +91,120 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       };
 
       const captureStart = performance.now();
-      console.log("📊 Starting fresh CWV capture at:", captureStart);
-      
+      log("📊 Starting fresh CWV capture at:", captureStart);
+
       // TTFB - only meaningful for actual navigation, not view transitions
       const navEntry = performance.getEntriesByType("navigation")[0];
       if (navEntry && navEntry.responseStart) {
         metrics.ttfb = navEntry.responseStart;
-        console.log("✅ TTFB:", metrics.ttfb);
+        log("✅ TTFB:", metrics.ttfb);
       }
 
       // For Astro view transitions, always use buffered observers
       // View transitions don't trigger new paint events, so we capture the current page's metrics
-      console.log("🎯 Using buffered observers (Astro view transitions)");
-      
+      log("🎯 Using buffered observers (Astro view transitions)");
+
+      // Check Performance Observer support
+      const supportedTypes = [];
+      const testTypes = [
+        "largest-contentful-paint",
+        "layout-shift",
+        "first-input",
+        "paint",
+      ];
+      testTypes.forEach((type) => {
+        try {
+          PerformanceObserver.supportedEntryTypes.includes(type) &&
+            supportedTypes.push(type);
+        } catch (e) {}
+      });
+      log("🔧 Supported Performance Observer types:", supportedTypes);
+
       // LCP - always buffered for Astro
-      new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        console.log("🔍 LCP Observer fired - entries:", entries.length);
-        
-        if (entries.length > 0) {
-          console.log("📊 LCP entries:", entries.map(e => ({
-            renderTime: e.renderTime,
-            loadTime: e.loadTime, 
-            startTime: e.startTime,
-            element: e.element?.tagName || 'unknown'
-          })));
-        } else {
-          console.warn("⚠️ LCP Observer fired but no entries found");
-        }
-        
-        const lastEntry = entries.pop();
-        if (lastEntry) {
-          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
-          console.log("✅ LCP set to:", metrics.lcp);
-        } else {
-          console.warn("❌ No LCP entry to process");
-        }
-      }).observe({ type: "largest-contentful-paint", buffered: true });
+      log("🔧 Registering LCP observer...");
+      try {
+        new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          log("🔍 LCP Observer fired - entries:", entries.length);
+
+          if (entries.length > 0) {
+            log(
+              "📊 LCP entries:",
+              entries.map((e) => ({
+                renderTime: e.renderTime,
+                loadTime: e.loadTime,
+                startTime: e.startTime,
+                element: e.element?.tagName || "unknown",
+              })),
+            );
+          } else {
+            warn("⚠️ LCP Observer fired but no entries found");
+          }
+
+          const lastEntry = entries.pop();
+          if (lastEntry) {
+            metrics.lcp =
+              lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+            log("✅ LCP set to:", metrics.lcp);
+          } else {
+            warn("❌ No LCP entry to process");
+          }
+        }).observe({ type: "largest-contentful-paint", buffered: true });
+        log("✅ LCP observer registered");
+      } catch (error) {
+        error("❌ LCP observer failed:", error.message);
+      }
 
       // FCP - always buffered for Astro
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.name === "first-contentful-paint") {
             metrics.fcp = entry.startTime;
-            console.log("✅ FCP:", metrics.fcp);
+            log("✅ FCP:", metrics.fcp);
           }
         }
       }).observe({ type: "paint", buffered: true });
 
       // CLS - use buffered for cumulative score
+      log("🔧 Registering CLS observer...");
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        console.log("🔍 CLS Observer fired - entries:", entries.length);
-        
+        log("🔍 CLS Observer fired - entries:", entries.length);
+
         for (const entry of entries) {
           if (!entry.hadRecentInput && entry.value !== undefined) {
             metrics.cls += entry.value;
-            console.log("✅ CLS delta:", entry.value, "| Total:", metrics.cls);
+            log("✅ CLS delta:", entry.value, "| Total:", metrics.cls);
           }
         }
-        
+
         if (entries.length === 0) {
-          console.log("✅ CLS: No layout shifts detected (good performance!)");
+          log("✅ CLS: No layout shifts detected (good performance!)");
         }
       }).observe({ type: "layout-shift", buffered: true });
+      log("✅ CLS observer registered");
 
       // FID - use buffered for any recorded input delay
+      log("🔧 Registering FID observer...");
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        console.log("🔍 FID Observer fired - entries:", entries.length);
-        
+        log("🔍 FID Observer fired - entries:", entries.length);
+
         const firstInput = entries[0];
         if (firstInput && firstInput.processingStart) {
           metrics.fid = firstInput.processingStart - firstInput.startTime;
-          console.log("✅ FID:", metrics.fid, "ms");
+          log("✅ FID:", metrics.fid, "ms");
         } else if (entries.length === 0) {
-          console.log("✅ FID: No input delay recorded (good performance!)");
+          log("✅ FID: No input delay recorded (good performance!)");
         } else {
-          console.log("⚠️ FID entry exists but no processingStart:", firstInput);
+          log("⚠️ FID entry exists but no processingStart:", firstInput);
         }
       }).observe({ type: "first-input", buffered: true });
+      log("✅ FID observer registered");
 
       // Send after delay to capture metrics
       setTimeout(() => {
-        console.log("📤 Sending:", {
+        log("📤 Sending:", {
           session: metrics.session_id,
           path: metrics.path,
           browser: metrics.browser,
@@ -166,19 +212,21 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
           fcp: metrics.fcp,
           cls: metrics.cls,
           fid: metrics.fid,
-          ttfb: metrics.ttfb
+          ttfb: metrics.ttfb,
         });
-        
+
         // Debug: Log if all CWV are null
         if (!metrics.lcp && !metrics.fcp && !metrics.fid && metrics.cls === 0) {
-          console.warn("🚨 No CWV captured - all values null/zero");
+          warn("🚨 No CWV captured - all values null/zero");
         }
 
-        const blob = new Blob([JSON.stringify(metrics)], { type: "application/json" });
-        
+        const blob = new Blob([JSON.stringify(metrics)], {
+          type: "application/json",
+        });
+
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
-          console.log("📡 Sent via beacon");
+          log("📡 Sent via beacon");
         } else {
           fetch("/.netlify/functions/pandalytics", {
             method: "POST",
@@ -186,21 +234,21 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
             headers: { "Content-Type": "application/json" },
             keepalive: true,
           }).catch(() => {});
-          console.log("📡 Sent via fetch");
+          log("📡 Sent via fetch");
         }
 
         // Mark as sent
         sessionStorage.setItem(lastSentKey, now.toString());
-        console.log("✅ Marked sent:", new Date().toLocaleTimeString());
+        log("✅ Marked sent:", new Date().toLocaleTimeString());
       }, 1500);
     }
 
     // ONLY listen to astro:page-load (fires for all Astro navigation)
     document.addEventListener("astro:page-load", () => {
-      console.log("🎯 astro:page-load fired");
+      log("🎯 astro:page-load fired");
       trackPageCWV();
     });
-    
-    console.log("✅ Astro Analytics ready");
+
+    log("✅ Astro Analytics ready");
   })();
 </script>

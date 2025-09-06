@@ -16,7 +16,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     console.log("🚀 DEBUG Analytics loaded, hostname:", location.hostname);
-    
+
     if (
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1"
@@ -30,12 +30,16 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       console.log("📋 Session storage state:", {
         existing_session: sessionStorage.getItem("cwv_session"),
         cwv_initialized: sessionStorage.getItem("cwv_initialized"),
-        cwv_last_path: sessionStorage.getItem("cwv_last_path")
+        cwv_last_path: sessionStorage.getItem("cwv_last_path"),
       });
 
       let sessionId = sessionStorage.getItem("cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("cwv_session", sessionId);
         console.log("🆕 Created NEW session:", sessionId);
       } else {
@@ -44,28 +48,30 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 
       const isInitialLoad = !sessionStorage.getItem("cwv_initialized");
       const currentPath = location.pathname;
-      
+
       console.log("🔍 Load type analysis:", {
         isInitialLoad,
         currentPath,
-        reason: isInitialLoad ? "No cwv_initialized flag" : "cwv_initialized exists"
+        reason: isInitialLoad
+          ? "No cwv_initialized flag"
+          : "cwv_initialized exists",
       });
-      
+
       // Time-based deduplication
       const now = Date.now();
       const lastSentKey = `cwv_last_sent_${currentPath}`;
       const lastSent = parseInt(sessionStorage.getItem(lastSentKey) || "0");
       const timeSinceLastSent = now - lastSent;
       const cooldownPeriod = 60 * 1000;
-      
-      console.log("⏰ Time deduplication check:", { 
-        currentPath, 
+
+      console.log("⏰ Time deduplication check:", {
+        currentPath,
         lastSent: new Date(lastSent).toLocaleTimeString(),
-        timeSinceLastSent: Math.round(timeSinceLastSent / 1000) + "s", 
+        timeSinceLastSent: Math.round(timeSinceLastSent / 1000) + "s",
         cooldownPeriod: cooldownPeriod / 1000 + "s",
-        shouldSkip: timeSinceLastSent < cooldownPeriod 
+        shouldSkip: timeSinceLastSent < cooldownPeriod,
       });
-      
+
       if (timeSinceLastSent < cooldownPeriod) {
         console.log(`⏭️  SKIPPING - cooldown active`);
         return;
@@ -103,36 +109,48 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         ttfb: null,
       };
 
-      console.log("📊 Starting CWV capture, strategy:", isInitialLoad ? "BUFFERED (initial load)" : "NON-BUFFERED (SPA nav)");
+      console.log(
+        "📊 Starting CWV capture, strategy:",
+        isInitialLoad ? "BUFFERED (initial load)" : "NON-BUFFERED (SPA nav)",
+      );
 
       if (isInitialLoad) {
         console.log("🎯 INITIAL LOAD: Using buffered observers");
-        
+
         // LCP with debugging
         new PerformanceObserver((list) => {
           const entries = list.getEntries();
           const lastEntry = entries.pop();
           console.log("📈 LCP Observer fired:", {
             entryCount: entries.length + 1,
-            lastEntry: lastEntry ? {
-              renderTime: lastEntry.renderTime,
-              loadTime: lastEntry.loadTime,
-              startTime: lastEntry.startTime,
-              final: lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime
-            } : null
+            lastEntry: lastEntry
+              ? {
+                  renderTime: lastEntry.renderTime,
+                  loadTime: lastEntry.loadTime,
+                  startTime: lastEntry.startTime,
+                  final:
+                    lastEntry.renderTime ||
+                    lastEntry.loadTime ||
+                    lastEntry.startTime,
+                }
+              : null,
           });
           if (lastEntry) {
-            metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+            metrics.lcp =
+              lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
             console.log("✅ LCP set to:", metrics.lcp);
           }
         }).observe({ type: "largest-contentful-paint", buffered: true });
 
-        // FCP with debugging  
+        // FCP with debugging
         new PerformanceObserver((list) => {
           const entries = list.getEntries();
           console.log("🎨 FCP Observer fired:", {
             entryCount: entries.length,
-            entries: entries.map(e => ({ name: e.name, startTime: e.startTime }))
+            entries: entries.map((e) => ({
+              name: e.name,
+              startTime: e.startTime,
+            })),
           });
           for (const entry of entries) {
             if (entry.name === "first-contentful-paint") {
@@ -141,24 +159,26 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
             }
           }
         }).observe({ type: "paint", buffered: true });
-        
       } else {
         console.log("🔄 SPA NAVIGATION: Using non-buffered observers");
         const navigationStart = performance.now();
         console.log("⏱️  Navigation start timestamp:", navigationStart);
-        
+
         // Non-buffered observers with timestamp filtering
         new PerformanceObserver((list) => {
           const allEntries = list.getEntries();
-          const filteredEntries = allEntries.filter(entry => entry.startTime > navigationStart);
+          const filteredEntries = allEntries.filter(
+            (entry) => entry.startTime > navigationStart,
+          );
           console.log("📈 SPA LCP Observer:", {
             total: allEntries.length,
             filtered: filteredEntries.length,
-            navigationStart
+            navigationStart,
           });
           const lastEntry = filteredEntries.pop();
           if (lastEntry) {
-            metrics.lcp = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+            metrics.lcp =
+              lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
             console.log("✅ SPA LCP set to:", metrics.lcp);
           }
         }).observe({ type: "largest-contentful-paint", buffered: false });
@@ -171,33 +191,38 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
           browser: metrics.browser,
           lcp: metrics.lcp,
           fcp: metrics.fcp,
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toLocaleTimeString(),
         });
 
         const blob = new Blob([JSON.stringify(metrics)], {
           type: "application/json",
         });
 
-        console.log(`📡 SENDING CWV for ${metrics.path} (session: ${metrics.session_id})`);
+        console.log(
+          `📡 SENDING CWV for ${metrics.path} (session: ${metrics.session_id})`,
+        );
 
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
         }
 
         sessionStorage.setItem(lastSentKey, Date.now().toString());
-        console.log("✅ Marked as sent with timestamp:", new Date().toLocaleTimeString());
+        console.log(
+          "✅ Marked as sent with timestamp:",
+          new Date().toLocaleTimeString(),
+        );
       }, 2000); // Longer delay to ensure CWV capture
     }
 
     try {
       console.log("🎯 Tracking CWV on page load");
       trackCoreWebVitals();
-      
+
       document.addEventListener("astro:page-load", () => {
         console.log("🔄 astro:page-load event fired");
         trackCoreWebVitals();
       });
-      
+
       console.log("✅ Analytics setup complete");
     } catch (error) {
       console.error("❌ Analytics setup failed:", error);
