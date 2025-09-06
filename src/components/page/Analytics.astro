@@ -1,7 +1,7 @@
 ---
 // src/components/Analytics.astro
 // Core Web Vitals tracking only
-// Updated 250906 12:15
+// Updated 250906 15:01
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
@@ -13,7 +13,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       location.hostname === "localhost" ||
       location.hostname === "127.0.0.1"
     ) {
-      console.log("🚧 Core Web Vitals tracking disabled in development");
+      // console.log("🚧 Core Web Vitals tracking disabled in development");
       return;
     }
 
@@ -28,7 +28,11 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
       // Generate minimal session ID for this page load
       let sessionId = sessionStorage.getItem("cwv_session");
       if (!sessionId) {
-        sessionId = 'cwv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+        sessionId =
+          "cwv_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substring(2, 11);
         sessionStorage.setItem("cwv_session", sessionId);
       }
 
@@ -87,7 +91,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
         metrics.ttfb = navEntry.responseStart;
       }
 
-      console.log("📊 Core Web Vitals:", metrics);
+      // console.log("📊 Core Web Vitals:", metrics);
 
       // Send metrics after delay to capture CWV
       setTimeout(() => {
@@ -95,7 +99,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
           type: "application/json",
         });
 
-        console.log(`📊 Sending CWV for ${metrics.path}`);
+        // console.log(`📊 Sending CWV for ${metrics.path}`);
 
         if (navigator.sendBeacon) {
           navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
