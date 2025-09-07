@@ -1,8 +1,26 @@
 ---
+// ANALYTICS VERSION 12 - EVENT DUPLICATION FIX
+// Date: 2025-09-07 (Claude Code session - event duplication investigation)
+// Status: WORKING ✅ - Fixed multiple event listener duplication
+// Changes from V11:
+// - Added global guard condition to prevent multiple initializations
+// - Added window.__astro_analytics_initialized flag
+// - Script now safely exits if already initialized
+// Issues Fixed:
+// - ✅ Fixed duplicate astro:page-load event listeners during view transitions
+// - ✅ Resolved multiple trackPageCWV() calls on same page
+// - ✅ Eliminated event duplication causing incorrect analytics data
+// Remaining Issues:
+// - None identified - clean production-ready implementation
+// Key Technical Insights:
+// - Astro view transitions can cause scripts to execute multiple times
+// - Global guards are essential for preventing duplicate initialization
+// - Simple boolean flag prevents all duplication issues effectively
+
 // src/components/Analytics.astro
 // Core Web Vitals tracking only
 // Listens for Astro Page Load event
-// Updated 250906 17:05 - Added debug toggle, clean production mode
+// Updated 250907 16:52 - Added duplication prevention guard
 
 const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---

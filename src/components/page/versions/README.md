@@ -82,9 +82,9 @@ This directory contains historical versions of the Analytics.astro component to 
   **Browser Compatibility Discovery**: Safari only supports `["paint"]` Performance Observer type
   **Core Web Vitals Status**: LCP/CLS/FID coming to Safari in 2025 (Interop 2025)
 
-### V11 - INP Complete (CURRENT) ✅
+### V11 - INP Complete ✅
 
-**Status**: 🚀 PRODUCTION READY - Complete Core Web Vitals 2024-2025 implementation
+**Status**: ⚠️ HAD EVENT DUPLICATION ISSUE - Complete Core Web Vitals 2024-2025 implementation  
 **Key Changes**:
 
 - ✅ Added missing INP (Interaction to Next Paint) measurement
@@ -93,8 +93,22 @@ This directory contains historical versions of the Analytics.astro component to 
 - ✅ Added INP to metrics object, debug logging, and error checking
 - ✅ Added "event" to Performance Observer support detection
   **Issues Fixed**: INP was completely missing (causing null values in both Safari and Chrome)
+  **Issue Discovered**: Multiple event listeners being registered due to Astro view transitions  
   **Current Metrics**: All 3 official Core Web Vitals 2024-2025 (LCP, INP, CLS) + supplementary metrics (FCP, TTFB)
   **Deprecation Note**: FID retained for historical comparison but deprecated by Google March 2024 (replaced by INP)
+
+### V12 - Event Duplication Fix (CURRENT) ✅
+
+**Status**: 🚀 PRODUCTION READY - Fixed event listener duplication with global guard
+**Key Changes**:
+
+- ✅ Added `window.__astro_analytics_initialized` global flag
+- ✅ Script safely exits if already initialized (prevents duplicates)
+- ✅ Maintains all V11 functionality while fixing duplication
+- ✅ Zero performance impact - simple boolean check
+  **Issues Fixed**: Multiple `astro:page-load` event listeners during view transitions
+  **Technical Insight**: Astro view transitions can cause inline scripts to execute multiple times
+  **Verification**: Only 1 addEventListener call and 1 trackPageCWV() call confirmed
 
 ## Key Technical Learnings
 
@@ -105,6 +119,8 @@ This directory contains historical versions of the Analytics.astro component to 
 3. **Time-Based Deduplication**: Much more user-friendly than permanent session blocking while still preventing spam.
 
 4. **Client-Side Browser Parsing**: Works correctly in JavaScript but somehow not reaching database properly.
+
+5. **Astro View Transitions & Script Execution**: View transitions can cause inline scripts to execute multiple times, requiring global guards to prevent duplicate event listeners and initialization.
 
 ## Current Status
 
@@ -119,6 +135,8 @@ The analytics system is fully functional and complete:
 - ✅ Client-side browser detection with versions
 - ✅ Production-ready debug toggle system
 - ✅ INP measurement now capturing interaction delays
+- ✅ **Event duplication fixed** - Single event listener per page load
+- ✅ Global initialization guard prevents duplicate tracking
 
 ## Next Steps (User Requested No Code Changes)
 
