@@ -9,7 +9,7 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 <script define:vars={{ siteId }} is:inline>
   (function () {
     // Debug toggle - set to false for production
-    const DEBUG = true;
+    const DEBUG = false;
 
     const log = (...args) => DEBUG && console.log(...args);
     const warn = (...args) => DEBUG && console.warn(...args);

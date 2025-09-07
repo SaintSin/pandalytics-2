@@ -1,5 +1,6 @@
 ---
 import Layout from "@layouts/BaseLayout.astro";
+import { BaselineStatus } from "astro-embed";
 
 const meta = {
   title: "Welcome to Astro",
@@ -131,15 +132,15 @@ try {
             <tr>
               <th>Site ID</th>
               <th>Path</th>
-              <th>Country</th>
-              <th>Screen</th>
               <th>LCP</th>
               <th>CLS</th>
-              <th>FID</th>
+              <th>INP</th>
               <th>FCP</th>
               <th>TTFB</th>
-              <th>INP</th>
+              <th>FID*</th>
               <th>Browser</th>
+              <th>Screen</th>
+              <th>Country</th>
               <th>Timestamp / Session</th>
             </tr>
           </thead>
@@ -148,17 +149,17 @@ try {
               <tr>
                 <td>{row[1]}</td>
                 <td>{row[3] || row[2]}</td>
-                <td>{row[4] ?? ""}</td>
+                <td set:html={formatCWV("lcp", row[8])} />
+                <td set:html={formatCWV("cls", row[9])} />
+                <td set:html={formatCWV("inp", row[13])} />
+                <td set:html={formatCWV("fcp", row[11])} />
+                <td set:html={formatCWV("ttfb", row[12])} />
+                <td set:html={formatCWV("fid", row[10])} />
+                <td>{row[14] || "Unknown"}</td>
                 <td>
                   {row[5]}×{row[6]}
                 </td>
-                <td set:html={formatCWV("lcp", row[8])} />
-                <td set:html={formatCWV("cls", row[9])} />
-                <td set:html={formatCWV("fid", row[10])} />
-                <td set:html={formatCWV("fcp", row[11])} />
-                <td set:html={formatCWV("ttfb", row[12])} />
-                <td set:html={formatCWV("inp", row[13])} />
-                <td>{row[14] || "Unknown"}</td>
+                <td>{row[4] ?? ""}</td>
                 <td>
                   <div style="font-size: 13px;">
                     {new Date(row[7]).toLocaleString()}
@@ -171,13 +172,35 @@ try {
             ))}
           </tbody>
         </table>
+        <p>
+          <strong>*</strong> FID (First Input Delay) was deprecated by Google in March 2024 and replaced with INP (Interaction to Next Paint) as an official Core Web Vital. FID data is retained for historical comparison.
+        </p>
       ) : (
         <p>No metrics found.</p>
       )
     }
 
-    <h2>Raw Turso Response (Debugging)</h2>
-    <pre>{JSON.stringify(results, null, 2)}</pre>
+    <div style="margin-top: 2rem; padding: 1rem; background: #f9f9f9; border-radius: 8px; font-size: 14px; color: #555;">
+      <h3 style="margin-top: 0; color: #333;">Core Web Vitals Browser Support</h3>
+      <p><strong>Current Official Metrics (2024-2025):</strong> LCP, CLS, INP</p>
+      <p><strong>Supplementary Metrics:</strong> FCP, TTFB</p>
+      
+      <div class="baseline-container">         
+        <h3>Performance Observer APIs:</h3>
+        <div>
+          <strong>Largest Contentful Paint (LCP):</strong>
+          <BaselineStatus id="largest-contentful-paint" />
+        </div>      
+         <div>
+          <strong>Event Timing API (INP):</strong>
+          <BaselineStatus id="event-timing" />
+        </div><div>
+          <strong>Layout Instability API (CLS):</strong>
+          <BaselineStatus id="layout-instability" />
+        </div>
+      </div>
+      <p>Note: Core Web Vitals are part of Interop 2025. Safari currently has limited support but full implementation is expected in future releases.</p>
+    </div>
   </main>
 </Layout>
 <style>
@@ -214,4 +237,5 @@ try {
     overflow-x: auto;
     color: #eee;
   }
+  .baseline-container div {padding-block-start: 1rem; max-width: 50ch;}
 </style>
