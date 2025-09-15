@@ -162,7 +162,7 @@ try {
                 <td>{row[4] ?? ""}</td>
                 <td>
                   <div style="font-size: 13px;">
-                    {new Date(row[7]).toLocaleString()}
+                    {new Date(row[7]).toLocaleString("en-GB")}
                   </div>
                   <div style="font-size: 11px; color: #666; margin-top: 2px;">
                     {row[0]}
@@ -184,7 +184,6 @@ try {
       <h3>Core Web Vitals Browser Support</h3>
       <p><strong>Current Official Metrics (2024-2025):</strong> LCP, CLS, INP</p>
       <p><strong>Supplementary Metrics:</strong> FCP, TTFB</p>
-      
       <div class="baseline-container">         
         <h3>Performance Observer APIs:</h3>
         <div>
