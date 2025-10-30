@@ -1,34 +1,35 @@
 {
-  "name": "Pandalytics",
-  "type": "module",
-  "version": "0.0.1",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro",
-    "prettier": "exec prettier . --write"
-  },
-  "dependencies": {
-    "@astrojs/netlify": "^6.5.13",
-    "@astrojs/sitemap": "^3.6.0",
-    "@iconify-json/ri": "^1.2.6",
-    "@libsql/client": "^0.15.15",
-    "astro": "^5.14.5",
-    "astro-capo": "^0.0.1",
-    "astro-embed": "^0.9.1",
-    "astro-icon": "^1.1.5",
-    "open-props": "^1.7.16",
-    "sass": "^1.93.2",
-    "sharp": "^0.34.4"
-  },
-  "devDependencies": {
-    "@netlify/functions": "^5.0.0",
-    "@types/node": "^24.7.2",
-    "postcss-jit-props": "^1.0.16",
-    "prettier": "3.6.2",
-    "prettier-plugin-astro": "0.14.1",
-    "prettier-plugin-css-order": "^2.1.2",
-    "typescript": "^5.9.3"
-  }
+	"name": "Pandalytics",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"astro": "astro",
+		"prettier": "exec prettier . --write"
+	},
+	"dependencies": {
+		"@astrojs/netlify": "^6.6.0",
+		"@astrojs/sitemap": "^3.6.0",
+		"@iconify-json/ri": "^1.2.6",
+		"@libsql/client": "^0.15.15",
+		"astro": "^5.15.2",
+		"astro-capo": "^0.0.1",
+		"astro-embed": "^0.9.1",
+		"astro-icon": "^1.1.5",
+		"open-props": "^1.7.16",
+		"sass": "^1.93.2",
+		"sharp": "^0.34.4"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.2",
+		"@netlify/functions": "^5.0.1",
+		"@types/node": "^24.9.2",
+		"postcss-jit-props": "^1.0.16",
+		"prettier": "3.6.2",
+		"prettier-plugin-astro": "0.14.1",
+		"prettier-plugin-css-order": "^2.1.2",
+		"typescript": "^5.9.3"
+	}
 }

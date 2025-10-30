@@ -132,10 +132,10 @@ import Analytics from "@components/page/Analytics.astro";
 
 <!doctype html>
 <html>
-  <body>
-    <!-- Your content -->
-    <Analytics />
-  </body>
+	<body>
+		<!-- Your content -->
+		<Analytics />
+	</body>
 </html>
 ```
 

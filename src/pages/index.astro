@@ -1,23 +1,22 @@
 ---
 import { Image } from "astro:assets";
-
+import image1 from "@images/panda-01.jpg";
 import Layout from "@layouts/BaseLayout.astro";
 
-import image1 from "@images/panda-01.jpg";
 const meta = {
-  title: "Welcome to Astro",
-  description: "The metadescription",
-  imageOG: "generic-social-1200x630.png",
-  altOG: "Alt text for OG image",
+	title: "Welcome to Astro",
+	description: "The metadescription",
+	imageOG: "generic-social-1200x630.png",
+	altOG: "Alt text for OG image",
 };
 ---
 
 <Layout metaData={meta}>
-  <main class="wrapper flow">
-    <h1>Pandalytics 2</h1>
-    <p>17:24</p>
-    <table>
-      <tbody><tr><td>18 August</td><td>Phuket Property</td></tr></tbody>
-    </table>
-  </main>
+	<main class="wrapper flow">
+		<h1>Pandalytics 2</h1>
+		<p>17:24</p>
+		<table>
+			<tbody><tr><td>18 August</td><td>Phuket Property</td></tr></tbody>
+		</table>
+	</main>
 </Layout>

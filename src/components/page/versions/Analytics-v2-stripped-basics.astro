@@ -17,77 +17,77 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
 
 <script define:vars={{ siteId }} is:inline>
-  (function () {
-    console.log("🚀 Core Web Vitals tracking loaded");
+	(function () {
+		console.log("🚀 Core Web Vitals tracking loaded");
 
-    if (
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-    ) {
-      console.log("🚧 CWV tracking disabled in development");
-      return;
-    }
+		if (
+			location.hostname === "localhost" ||
+			location.hostname === "127.0.0.1"
+		) {
+			console.log("🚧 CWV tracking disabled in development");
+			return;
+		}
 
-    function trackCoreWebVitals() {
-      let sessionId = sessionStorage.getItem("cwv_session");
-      if (!sessionId) {
-        sessionId =
-          "cwv_" +
-          Date.now() +
-          "_" +
-          Math.random().toString(36).substring(2, 11);
-        sessionStorage.setItem("cwv_session", sessionId);
-      }
+		function trackCoreWebVitals() {
+			let sessionId = sessionStorage.getItem("cwv_session");
+			if (!sessionId) {
+				sessionId =
+					"cwv_" +
+					Date.now() +
+					"_" +
+					Math.random().toString(36).substring(2, 11);
+				sessionStorage.setItem("cwv_session", sessionId);
+			}
 
-      // PROBLEM: Still permanent blocking
-      const trackingKey = `cwv_tracked_${sessionId}_${location.pathname}`;
-      if (sessionStorage.getItem(trackingKey)) {
-        console.log("⏭️ CWV already tracked for this page");
-        return;
-      }
+			// PROBLEM: Still permanent blocking
+			const trackingKey = `cwv_tracked_${sessionId}_${location.pathname}`;
+			if (sessionStorage.getItem(trackingKey)) {
+				console.log("⏭️ CWV already tracked for this page");
+				return;
+			}
 
-      const metrics = {
-        session_id: sessionId,
-        site_id: siteId,
-        url: location.href,
-        path: location.pathname,
-        user_agent: navigator.userAgent,
-        screen_width: window.screen.width,
-        screen_height: window.screen.height,
-        lcp: null,
-        fid: null,
-        cls: 0,
-        fcp: null,
-        ttfb: null,
-      };
+			const metrics = {
+				session_id: sessionId,
+				site_id: siteId,
+				url: location.href,
+				path: location.pathname,
+				user_agent: navigator.userAgent,
+				screen_width: window.screen.width,
+				screen_height: window.screen.height,
+				lcp: null,
+				fid: null,
+				cls: 0,
+				fcp: null,
+				ttfb: null,
+			};
 
-      // PROBLEM: Still all buffered - gets same values!
-      new PerformanceObserver((list) => {
-        const lastEntry = list.getEntries().pop();
-        if (lastEntry) {
-          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
-        }
-      }).observe({ type: "largest-contentful-paint", buffered: true });
+			// PROBLEM: Still all buffered - gets same values!
+			new PerformanceObserver((list) => {
+				const lastEntry = list.getEntries().pop();
+				if (lastEntry) {
+					metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
+				}
+			}).observe({ type: "largest-contentful-paint", buffered: true });
 
-      // [Other observers still buffered...]
+			// [Other observers still buffered...]
 
-      setTimeout(() => {
-        const blob = new Blob([JSON.stringify(metrics)], {
-          type: "application/json",
-        });
+			setTimeout(() => {
+				const blob = new Blob([JSON.stringify(metrics)], {
+					type: "application/json",
+				});
 
-        console.log("📊 Sending CWV:", metrics);
+				console.log("📊 Sending CWV:", metrics);
 
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
-        }
+				if (navigator.sendBeacon) {
+					navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
+				}
 
-        // Still permanent blocking
-        sessionStorage.setItem(trackingKey, "true");
-      }, 1500);
-    }
+				// Still permanent blocking
+				sessionStorage.setItem(trackingKey, "true");
+			}, 1500);
+		}
 
-    trackCoreWebVitals();
-    document.addEventListener("astro:page-load", trackCoreWebVitals);
-  })();
+		trackCoreWebVitals();
+		document.addEventListener("astro:page-load", trackCoreWebVitals);
+	})();
 </script>

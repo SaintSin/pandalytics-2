@@ -1,6 +1,6 @@
 ---
 const PANDALYTICS_TURSO_REST_ENDPOINT = import.meta.env
-  .PANDALYTICS_TURSO_REST_ENDPOINT;
+	.PANDALYTICS_TURSO_REST_ENDPOINT;
 const PANDALYTICS_TURSO_API_TOKEN = import.meta.env.PANDALYTICS_TURSO_API_TOKEN;
 
 // SQL query to fetch latest 50 pageviews with session data
@@ -31,183 +31,184 @@ const sql = `
 
 // Function to format Core Web Vitals with color coding
 function formatCWV(metric, value) {
-  if (value === null || value === undefined) return "-";
+	if (value === null || value === undefined) return "-";
 
-  const val = Math.round(value);
+	const val = Math.round(value);
 
-  switch (metric) {
-    case "lcp":
-      return val <= 2500
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 4000
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "fid":
-      return val <= 100
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 300
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "cls":
-      const clsVal = (val / 1000).toFixed(3);
-      return val <= 100
-        ? `<span style="color: green">${clsVal}</span>`
-        : val <= 250
-          ? `<span style="color: orange">${clsVal}</span>`
-          : `<span style="color: red">${clsVal}</span>`;
-    case "fcp":
-      return val <= 1800
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 3000
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "ttfb":
-      return val <= 800
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 1800
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "inp":
-      return val <= 200
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 500
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    default:
-      return `${val}ms`;
-  }
+	switch (metric) {
+		case "lcp":
+			return val <= 2500
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 4000
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "fid":
+			return val <= 100
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 300
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "cls": {
+			const clsVal = (val / 1000).toFixed(3);
+			return val <= 100
+				? `<span style="color: green">${clsVal}</span>`
+				: val <= 250
+					? `<span style="color: orange">${clsVal}</span>`
+					: `<span style="color: red">${clsVal}</span>`;
+		}
+		case "fcp":
+			return val <= 1800
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 3000
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "ttfb":
+			return val <= 800
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 1800
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "inp":
+			return val <= 200
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 500
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		default:
+			return `${val}ms`;
+	}
 }
 
 let results = [];
 let errorMsg = null;
 
 try {
-  const res = await fetch(PANDALYTICS_TURSO_REST_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${PANDALYTICS_TURSO_API_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      statements: [{ q: sql }],
-    }),
-  });
+	const res = await fetch(PANDALYTICS_TURSO_REST_ENDPOINT, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${PANDALYTICS_TURSO_API_TOKEN}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			statements: [{ q: sql }],
+		}),
+	});
 
-  if (!res.ok) {
-    errorMsg = `Error fetching metrics: ${res.status} ${res.statusText}`;
-  } else {
-    const data = await res.json();
-    // console.log('Turso raw data:', JSON.stringify(data, null, 2));
+	if (!res.ok) {
+		errorMsg = `Error fetching metrics: ${res.status} ${res.statusText}`;
+	} else {
+		const data = await res.json();
+		// console.log('Turso raw data:', JSON.stringify(data, null, 2));
 
-    if (data?.[0]?.results?.rows) {
-      results = data[0].results.rows;
-    } else {
-      errorMsg = "No rows found in Turso response.";
-    }
-  }
+		if (data?.[0]?.results?.rows) {
+			results = data[0].results.rows;
+		} else {
+			errorMsg = "No rows found in Turso response.";
+		}
+	}
 } catch (err) {
-  errorMsg = `Fetch error: ${err.message}`;
+	errorMsg = `Fetch error: ${err.message}`;
 }
 ---
 
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Metrics</title>
-    <style>
-      body {
-        margin: 2rem;
-        background: #f9f9f9;
-        font-family: sans-serif;
-      }
-      table {
-        border-collapse: collapse;
-        background: white;
-        width: 100%;
-      }
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px 12px;
-        font-size: 14px;
-      }
-      th {
-        background: #f0f0f0;
-        text-align: left;
-      }
-      tr:hover {
-        background: #f7f7f7;
-      }
-      h1 {
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-      }
-      .error {
-        color: red;
-        font-weight: bold;
-      }
-      pre {
-        background: #222;
-        padding: 1rem;
-        max-height: 300px;
-        overflow-x: auto;
-        color: #eee;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Latest Metrics</h1>
+	<head>
+		<meta charset="utf-8" />
+		<title>Metrics</title>
+		<style>
+			body {
+				margin: 2rem;
+				background: #f9f9f9;
+				font-family: sans-serif;
+			}
+			table {
+				border-collapse: collapse;
+				background: white;
+				width: 100%;
+			}
+			th,
+			td {
+				border: 1px solid #ddd;
+				padding: 8px 12px;
+				font-size: 14px;
+			}
+			th {
+				background: #f0f0f0;
+				text-align: left;
+			}
+			tr:hover {
+				background: #f7f7f7;
+			}
+			h1 {
+				margin-bottom: 1rem;
+				font-size: 1.5rem;
+			}
+			.error {
+				color: red;
+				font-weight: bold;
+			}
+			pre {
+				background: #222;
+				padding: 1rem;
+				max-height: 300px;
+				overflow-x: auto;
+				color: #eee;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Latest Metrics</h1>
 
-    {
-      errorMsg ? (
-        <p class="error">{errorMsg}</p>
-      ) : results.length > 0 ? (
-        <table>
-          <thead>
-            <tr>
-              <th>Session ID</th>
-              <th>Site ID</th>
-              <th>Path</th>
-              <th>Country</th>
-              <th>Screen</th>
-              <th>LCP</th>
-              <th>CLS</th>
-              <th>FID</th>
-              <th>FCP</th>
-              <th>TTFB</th>
-              <th>INP</th>
-              <th>Browser</th>
-              <th>Timestamp</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((row) => (
-              <tr>
-                <td>{row[0]}</td>
-                <td>{row[1]}</td>
-                <td>{row[3] || row[2]}</td>
-                <td>{row[4] ?? ""}</td>
-                <td>
-                  {row[5]}×{row[6]}
-                </td>
-                <td set:html={formatCWV("lcp", row[8])} />
-                <td set:html={formatCWV("cls", row[9])} />
-                <td set:html={formatCWV("fid", row[10])} />
-                <td set:html={formatCWV("fcp", row[11])} />
-                <td set:html={formatCWV("ttfb", row[12])} />
-                <td set:html={formatCWV("inp", row[13])} />
-                <td>{row[14] || "Unknown"}</td>
-                <td>{new Date(row[7]).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>No metrics found.</p>
-      )
-    }
+		{
+			errorMsg ? (
+				<p class="error">{errorMsg}</p>
+			) : results.length > 0 ? (
+				<table>
+					<thead>
+						<tr>
+							<th>Session ID</th>
+							<th>Site ID</th>
+							<th>Path</th>
+							<th>Country</th>
+							<th>Screen</th>
+							<th>LCP</th>
+							<th>CLS</th>
+							<th>FID</th>
+							<th>FCP</th>
+							<th>TTFB</th>
+							<th>INP</th>
+							<th>Browser</th>
+							<th>Timestamp</th>
+						</tr>
+					</thead>
+					<tbody>
+						{results.map((row) => (
+							<tr>
+								<td>{row[0]}</td>
+								<td>{row[1]}</td>
+								<td>{row[3] || row[2]}</td>
+								<td>{row[4] ?? ""}</td>
+								<td>
+									{row[5]}×{row[6]}
+								</td>
+								<td set:html={formatCWV("lcp", row[8])} />
+								<td set:html={formatCWV("cls", row[9])} />
+								<td set:html={formatCWV("fid", row[10])} />
+								<td set:html={formatCWV("fcp", row[11])} />
+								<td set:html={formatCWV("ttfb", row[12])} />
+								<td set:html={formatCWV("inp", row[13])} />
+								<td>{row[14] || "Unknown"}</td>
+								<td>{new Date(row[7]).toLocaleString()}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			) : (
+				<p>No metrics found.</p>
+			)
+		}
 
-    <h2>Raw Turso Response (Debugging)</h2>
-    <pre>{JSON.stringify(results, null, 2)}</pre>
-  </body>
+		<h2>Raw Turso Response (Debugging)</h2>
+		<pre>{JSON.stringify(results, null, 2)}</pre>
+	</body>
 </html>

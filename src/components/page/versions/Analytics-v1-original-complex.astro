@@ -18,78 +18,78 @@ const siteId = Astro.site ? new URL(Astro.site).hostname : "localhost";
 ---
 
 <script define:vars={{ siteId }} is:inline>
-  (function () {
-    console.log("🚀 Analytics component loaded, hostname:", location.hostname);
+	(function () {
+		console.log("🚀 Analytics component loaded, hostname:", location.hostname);
 
-    // Skip in development
-    if (
-      location.hostname === "localhost" ||
-      location.hostname === "127.0.0.1"
-    ) {
-      console.log("🚧 Analytics tracking disabled in development");
-      return;
-    }
+		// Skip in development
+		if (
+			location.hostname === "localhost" ||
+			location.hostname === "127.0.0.1"
+		) {
+			console.log("🚧 Analytics tracking disabled in development");
+			return;
+		}
 
-    function trackPageview() {
-      // Generate session ID
-      let sessionId = sessionStorage.getItem("analytics_session");
-      if (!sessionId) {
-        sessionId =
-          Date.now() + "_" + Math.random().toString(36).substring(2, 11);
-        sessionStorage.setItem("analytics_session", sessionId);
-      }
+		function trackPageview() {
+			// Generate session ID
+			let sessionId = sessionStorage.getItem("analytics_session");
+			if (!sessionId) {
+				sessionId =
+					Date.now() + "_" + Math.random().toString(36).substring(2, 11);
+				sessionStorage.setItem("analytics_session", sessionId);
+			}
 
-      // Skip if already tracked
-      const trackingKey = `tracked_${sessionId}_${location.pathname}`;
-      if (sessionStorage.getItem(trackingKey)) {
-        console.log("⏭️ Page already tracked for this session");
-        return;
-      }
+			// Skip if already tracked
+			const trackingKey = `tracked_${sessionId}_${location.pathname}`;
+			if (sessionStorage.getItem(trackingKey)) {
+				console.log("⏭️ Page already tracked for this session");
+				return;
+			}
 
-      const metrics = {
-        session_id: sessionId,
-        site_id: siteId,
-        url: location.href,
-        path: location.pathname,
-        user_agent: navigator.userAgent,
-        screen_width: window.screen.width,
-        screen_height: window.screen.height,
-        // Core Web Vitals - all using buffered observers (PROBLEM!)
-        lcp: null,
-        fid: null,
-        cls: 0,
-        fcp: null,
-        ttfb: null,
-      };
+			const metrics = {
+				session_id: sessionId,
+				site_id: siteId,
+				url: location.href,
+				path: location.pathname,
+				user_agent: navigator.userAgent,
+				screen_width: window.screen.width,
+				screen_height: window.screen.height,
+				// Core Web Vitals - all using buffered observers (PROBLEM!)
+				lcp: null,
+				fid: null,
+				cls: 0,
+				fcp: null,
+				ttfb: null,
+			};
 
-      // LCP - PROBLEM: Always buffered, gets same value for all pages
-      new PerformanceObserver((list) => {
-        const lastEntry = list.getEntries().pop();
-        if (lastEntry) {
-          metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
-        }
-      }).observe({ type: "largest-contentful-paint", buffered: true });
+			// LCP - PROBLEM: Always buffered, gets same value for all pages
+			new PerformanceObserver((list) => {
+				const lastEntry = list.getEntries().pop();
+				if (lastEntry) {
+					metrics.lcp = lastEntry.renderTime || lastEntry.loadTime;
+				}
+			}).observe({ type: "largest-contentful-paint", buffered: true });
 
-      // Similar issues with other metrics...
-      // [Additional complex tracking code that caused problems]
+			// Similar issues with other metrics...
+			// [Additional complex tracking code that caused problems]
 
-      setTimeout(() => {
-        // Send data
-        const blob = new Blob([JSON.stringify(metrics)], {
-          type: "application/json",
-        });
+			setTimeout(() => {
+				// Send data
+				const blob = new Blob([JSON.stringify(metrics)], {
+					type: "application/json",
+				});
 
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
-        }
+				if (navigator.sendBeacon) {
+					navigator.sendBeacon("/.netlify/functions/pandalytics", blob);
+				}
 
-        // PROBLEM: Mark as permanently tracked (too aggressive)
-        sessionStorage.setItem(trackingKey, "true");
-      }, 2000);
-    }
+				// PROBLEM: Mark as permanently tracked (too aggressive)
+				sessionStorage.setItem(trackingKey, "true");
+			}, 2000);
+		}
 
-    // Track on load and view transitions
-    trackPageview();
-    document.addEventListener("astro:page-load", trackPageview);
-  })();
+		// Track on load and view transitions
+		trackPageview();
+		document.addEventListener("astro:page-load", trackPageview);
+	})();
 </script>

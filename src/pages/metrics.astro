@@ -3,13 +3,13 @@ import Layout from "@layouts/BaseLayout.astro";
 import { BaselineStatus } from "astro-embed";
 
 const meta = {
-  title: "Welcome to Astro",
-  description: "The metadescription",
-  imageOG: "generic-social-1200x630.png",
-  altOG: "Alt text for OG image",
+	title: "Welcome to Astro",
+	description: "The metadescription",
+	imageOG: "generic-social-1200x630.png",
+	altOG: "Alt text for OG image",
 };
 const PANDALYTICS_TURSO_REST_ENDPOINT = import.meta.env
-  .PANDALYTICS_TURSO_REST_ENDPOINT;
+	.PANDALYTICS_TURSO_REST_ENDPOINT;
 const PANDALYTICS_TURSO_API_TOKEN = import.meta.env.PANDALYTICS_TURSO_API_TOKEN;
 
 // SQL query to fetch latest 50 pageviews with session data
@@ -40,82 +40,83 @@ const sql = `
 
 // Function to format Core Web Vitals with color coding
 function formatCWV(metric, value) {
-  if (value === null || value === undefined) return "-";
+	if (value === null || value === undefined) return "-";
 
-  const val = Math.round(value);
+	const val = Math.round(value);
 
-  switch (metric) {
-    case "lcp":
-      return val <= 2500
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 4000
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "fid":
-      return val <= 100
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 300
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "cls":
-      const clsVal = (val / 1000).toFixed(3);
-      return val <= 100
-        ? `<span style="color: green">${clsVal}</span>`
-        : val <= 250
-          ? `<span style="color: orange">${clsVal}</span>`
-          : `<span style="color: red">${clsVal}</span>`;
-    case "fcp":
-      return val <= 1800
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 3000
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "ttfb":
-      return val <= 800
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 1800
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    case "inp":
-      return val <= 200
-        ? `<span style="color: green">${val}ms</span>`
-        : val <= 500
-          ? `<span style="color: orange">${val}ms</span>`
-          : `<span style="color: red">${val}ms</span>`;
-    default:
-      return `${val}ms`;
-  }
+	switch (metric) {
+		case "lcp":
+			return val <= 2500
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 4000
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "fid":
+			return val <= 100
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 300
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "cls": {
+			const clsVal = (val / 1000).toFixed(3);
+			return val <= 100
+				? `<span style="color: green">${clsVal}</span>`
+				: val <= 250
+					? `<span style="color: orange">${clsVal}</span>`
+					: `<span style="color: red">${clsVal}</span>`;
+		}
+		case "fcp":
+			return val <= 1800
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 3000
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "ttfb":
+			return val <= 800
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 1800
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		case "inp":
+			return val <= 200
+				? `<span style="color: green">${val}ms</span>`
+				: val <= 500
+					? `<span style="color: orange">${val}ms</span>`
+					: `<span style="color: red">${val}ms</span>`;
+		default:
+			return `${val}ms`;
+	}
 }
 
 let results = [];
 let errorMsg = null;
 
 try {
-  const res = await fetch(PANDALYTICS_TURSO_REST_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${PANDALYTICS_TURSO_API_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      statements: [{ q: sql }],
-    }),
-  });
+	const res = await fetch(PANDALYTICS_TURSO_REST_ENDPOINT, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${PANDALYTICS_TURSO_API_TOKEN}`,
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			statements: [{ q: sql }],
+		}),
+	});
 
-  if (!res.ok) {
-    errorMsg = `Error fetching metrics: ${res.status} ${res.statusText}`;
-  } else {
-    const data = await res.json();
-    // console.log('Turso raw data:', JSON.stringify(data, null, 2));
+	if (!res.ok) {
+		errorMsg = `Error fetching metrics: ${res.status} ${res.statusText}`;
+	} else {
+		const data = await res.json();
+		// console.log('Turso raw data:', JSON.stringify(data, null, 2));
 
-    if (data?.[0]?.results?.rows) {
-      results = data[0].results.rows;
-    } else {
-      errorMsg = "No rows found in Turso response.";
-    }
-  }
+		if (data?.[0]?.results?.rows) {
+			results = data[0].results.rows;
+		} else {
+			errorMsg = "No rows found in Turso response.";
+		}
+	}
 } catch (err) {
-  errorMsg = `Fetch error: ${err.message}`;
+	errorMsg = `Fetch error: ${err.message}`;
 }
 ---
 
